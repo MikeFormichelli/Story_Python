@@ -77,6 +77,28 @@ class Character:
                 data[key] = value
         return data
 
+    def edit_fields_interactively(self):
+        while True:
+            print("\nEditable fields:")
+            for key in self.__dict__:
+                if key == "name":
+                    continue  # skip name
+
+                print(f"- {key} (current: {self.__dict__[key]})")
+
+            u_select = input(
+                "Select a value to change from the list (done if finished):\n"
+            )
+            if u_select.lower() == "done":
+                break
+            if u_select in self.__dict__:
+                current_value = self.__dict__[u_select]
+                print(f"Current value for {u_select}: {current_value}")
+                chg_val = input(f"{u_select} - Change Value to:\n")
+                self.update_field(u_select, chg_val)
+            else:
+                print("Invalid field. Try again!")
+
     @staticmethod
     def select_character_from_file(file):
         Character._ensure_character_file("characters.json")
@@ -164,7 +186,7 @@ def app():
 
         print(character.__dict__.items())
 
-        c_save = input("Save?\n")
+        c_save = input("Save? (yes/no)\n")
         if c_save.lower() == "yes":
             character.to_json("characters.json")
         else:
@@ -174,23 +196,13 @@ def app():
         character = Character.make_character()
         if character != None:
             pprint.pprint(character.as_ordered_dict())
-            u_yn = input("Would you like to edit features?\n").lower()
+            u_yn = input("Would you like to edit features? (y/n)\n").lower()
             if u_yn.lower() not in ["y", "n"]:
                 print("invalid input")
-            if u_yn.lower() == "y":
-                while True:
-                    print("\nEditable fields:")
-                    for key in character.__dict__:
-                        print(f"- {key}")
 
-                    u_select = input("Select a value to change from the list:\n")
-                    if u_select.lower() == "done":
-                        break
-                    if u_select in character.__dict__:
-                        chg_val = input(f"{u_select} - Change Value to:\n")
-                        character.update_field(u_select, chg_val)
-                    else:
-                        print("Invalid field. Try again!")
+            if u_yn.lower() == "y":
+                character.edit_fields_interactively()
+
                 save = input("Save changes? (y/n)\n").lower()
                 if save == "y":
                     character.to_json("characters.json")
