@@ -1,5 +1,6 @@
 import json
 import pprint
+import os
 from collections import OrderedDict
 
 
@@ -47,6 +48,7 @@ class Character:
         )
 
     def to_json(self, file):
+        Character._ensure_character_file("characters.json")
         data_dict = {}
         for key, value in self.__dict__.items():
             data_dict[key] = value
@@ -76,7 +78,8 @@ class Character:
         return data
 
     @staticmethod
-    def convert_json_data(file):
+    def select_character_from_file(file):
+        Character._ensure_character_file("characters.json")
         with open(file, "r") as f:
             data = json.load(f)
             print(
@@ -90,8 +93,8 @@ class Character:
         return None
 
     @classmethod
-    def make_character(cls):
-        data_dict = cls.convert_json_data("characters.json")
+    def make_character(cls, file="characters.json"):
+        data_dict = cls.select_character_from_file(file)
         if data_dict != None:
             return Character.from_dict(data_dict)
         else:
@@ -99,6 +102,7 @@ class Character:
 
     @staticmethod
     def delete_character():
+        Character._ensure_character_file("characters.json")
         file = "characters.json"
         with open(file, "r") as f:
             data = json.load(f)
@@ -109,8 +113,27 @@ class Character:
         with open(file, "w") as fi:
             json.dump(data, fi, indent=4)
 
+    @staticmethod
+    def _ensure_character_file(file="chracters.json"):
+        if not os.path.exists(file):
+            with open(file, "w") as f:
+                json.dump({}, f, indent=4)
+            return
+        try:
+            with open(file, "r") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    raise ValueError("Root JSON is not a dictionary.")
+        except (json.JSONDecodeError, ValueError):
+            print(f"[WARNING] {file} is corrupted or invalid. Resetting to empty.")
+            with open(file, "w") as f:
+                json.dump({}, f, indent=4)
+
 
 def app():
+
+    Character._ensure_character_file("characters.json")
+
     u_choice = input(
         "Select mode\nC for Create Character, L for Load Character with an option to modify, D for delete character\n"
     )
