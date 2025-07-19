@@ -1,8 +1,9 @@
 import json
 import pprint
 import os
+import uuid
 from collections import OrderedDict
-
+from db import characters_collection
 
 class Character:
     def __init__(
@@ -18,6 +19,7 @@ class Character:
         minor_skills=None,
         cyberware=None,
         relationships=None,
+        _id=None
     ):
         self.name = name
         self.handle = handle
@@ -30,7 +32,23 @@ class Character:
         self.minor_skills = minor_skills or []
         self.cyberware = cyberware or []
         self.relationships = relationships or []
-
+        self._id = _id or str(uuid.uuid4()) #generate unique ids
+    #db functions
+    def to_dict(self):
+        return self.__dict__
+    
+    def save_to_db(self):
+        characters_collection.insert_one(self.to_dict())
+        
+    @classmethod
+    def load_from_db(cls, char_id):
+        data = characters_collection.find_one({"_id": char_id})
+        if data:
+            return cls(**data)
+        return None
+    
+    
+    #other functions
     @classmethod
     def from_dict(cls, data):
         return cls(
@@ -186,9 +204,11 @@ def app():
 
         print(character.__dict__.items())
 
-        c_save = input("Save? (yes/no)\n")
+        c_save = input("Save? (yes/no/db)\n")
         if c_save.lower() == "yes":
             character.to_json("characters.json")
+        elif c_save.lower() == "db":
+            character.save_to_db()
         else:
             print("End of Line.")
 
