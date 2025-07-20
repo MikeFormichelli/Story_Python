@@ -1,8 +1,8 @@
 import pprint
 from character_module import Character
+from visual import ShowWidget
 
-
-def app():
+def app(qt_app):
 
     Character._ensure_character_file("characters.json")
 
@@ -50,13 +50,22 @@ def app():
             u_sel_db = input("Select character from database or loc to use local:\n")
             loaded_character = Character.load_by_name(u_sel_db)
             print(loaded_character.name)
+            
+            #Show Visual Window
+            widget = ShowWidget(data=loaded_character.__dict__)
+            widget.show()
+            qt_app.processEvents() #allow UI to render
+            
+            input("Press enter to close window...")
+            widget.close()
+            
             u_db_up = input("Update character? (y/n)")
             if u_db_up == "y":
                 loaded_character.update_db()
 
         except Exception as e:
             print(e)
-
+        
             character = Character.make_character()
             if character != None:
                 pprint.pprint(character.as_ordered_dict())

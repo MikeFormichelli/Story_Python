@@ -4,6 +4,7 @@ import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone
 from bson import ObjectId
+import textwrap
 from db import characters_collection
 
 class Character:
@@ -20,7 +21,9 @@ class Character:
         minor_skills=None,
         cyberware=None,
         relationships=None,
-        _id=None
+        _id=None,
+        last_updated=None,
+        **kwargs
     ):
         self.name = name
         self.handle = handle
@@ -34,8 +37,12 @@ class Character:
         self.cyberware = cyberware or []
         self.relationships = relationships or []
         self._id = _id or str(uuid.uuid4()) #generate unique ids
-        self.last_updated = datetime.now(timezone.utc).isoformat()
+        self.last_updated = last_updated or datetime.now(timezone.utc).isoformat()
         
+        #absorb kwargs
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+            
     #db functions
     def to_dict(self):
         return self.__dict__
