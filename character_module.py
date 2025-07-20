@@ -33,6 +33,7 @@ class Character:
         self.cyberware = cyberware or []
         self.relationships = relationships or []
         self._id = _id or str(uuid.uuid4()) #generate unique ids
+        
     #db functions
     def to_dict(self):
         return self.__dict__
@@ -47,6 +48,17 @@ class Character:
             return cls(**data)
         return None
     
+    @classmethod
+    def show_characters(cls):
+        print(f"Showing characters:\n{[char["name"] for char in characters_collection.find()]}")
+        return 
+    
+    @classmethod
+    def load_by_name(cls, char_name):
+        data = characters_collection.find_one({"name": char_name})
+        if data:
+            return cls(**data)
+        return None
     
     #other functions
     @classmethod
@@ -213,24 +225,33 @@ def app():
             print("End of Line.")
 
     if u_choice.lower() == "l":
-        character = Character.make_character()
-        if character != None:
-            pprint.pprint(character.as_ordered_dict())
-            u_yn = input("Would you like to edit features? (y/n)\n").lower()
-            if u_yn.lower() not in ["y", "n"]:
-                print("invalid input")
+        try:
+            Character.show_characters()
+            u_sel_db = input("Select character from database or loc to use local:\n")
+            loaded_character = Character.load_by_name(u_sel_db)
+            print(loaded_character.name)
+            
+        except Exception as e:
+            print(e)
+            
+            character = Character.make_character()
+            if character != None:
+                pprint.pprint(character.as_ordered_dict())
+                u_yn = input("Would you like to edit features? (y/n)\n").lower()
+                if u_yn.lower() not in ["y", "n"]:
+                    print("invalid input")
 
-            if u_yn.lower() == "y":
-                character.edit_fields_interactively()
+                if u_yn.lower() == "y":
+                    character.edit_fields_interactively()
 
-                save = input("Save changes? (y/n)\n").lower()
-                if save == "y":
-                    character.to_json("characters.json")
-                    print("Character updated and saved.")
+                    save = input("Save changes? (y/n)\n").lower()
+                    if save == "y":
+                        character.to_json("characters.json")
+                        print("Character updated and saved.")
+                    else:
+                        print("Changes discarded.")
                 else:
-                    print("Changes discarded.")
-            else:
-                print("Load completed.")
+                    print("Load completed.")
 
     if u_choice.lower() == "d":
         Character.delete_character()
