@@ -1,8 +1,9 @@
 import json
-import pprint
 import os
 import uuid
 from collections import OrderedDict
+from datetime import datetime, timezone
+from bson import ObjectId
 from db import characters_collection
 
 class Character:
@@ -33,14 +34,63 @@ class Character:
         self.cyberware = cyberware or []
         self.relationships = relationships or []
         self._id = _id or str(uuid.uuid4()) #generate unique ids
+        self.last_updated = datetime.now(timezone.utc).isoformat()
         
     #db functions
     def to_dict(self):
         return self.__dict__
     
     def save_to_db(self):
+        self._stamp()
+        
+        existing = characters_collection.find_one({"_id": self._id})
+        if existing:
+            print("Character already exists in database")
+            return
         characters_collection.insert_one(self.to_dict())
         
+    def update_db(self):
+        while True:
+            fresh_data = characters_collection.find_one({"_id": self._id})
+            if not fresh_data:
+                print("Character not found in database.")
+                return
+            self.__dict__.update(fresh_data)
+            
+            print("\nEditable fields:")
+            # for key in self.__dict__:
+            #     if key in ["name", "_id"]:
+            #         continue  # skip name
+            #     print(f"- {key} (current: {self.__dict__[key]})")
+            self.get_editable_fields()
+
+            u_select = input(
+                "Select a value to change from the list (done if finished):\n"
+            )
+            if u_select.lower() == "done":
+                break
+            
+            if u_select in self.__dict__ and u_select not in ["name", "_id"]:
+                current_value = self.__dict__[u_select]
+                print(f"Current value for {u_select}: {current_value}")
+                chg_val = input(f"{u_select} - Change Value to:\n")
+                
+                if isinstance(current_value, list):
+                    new_val = [v.strip() for v in chg_val.split(",") if v.strip()]
+                else:
+                    new_val = chg_val
+                    
+                self._stamp()
+                characters_collection.update_one({"_id": self._id}, {"$set": {u_select: new_val, "last_updated": self.last_updated}})
+                print(f"Updated '{u_select}' successfully.")
+            else:
+                print("Invalid field. Try again!")
+        # Final sync after all updates
+        fresh_data = characters_collection.find_one({"_id": self._id})
+        if fresh_data:
+            self.__dict__.update(fresh_data)
+            print("✅ Final sync complete. Character is up-to-date.")
+
     @classmethod
     def load_from_db(cls, char_id):
         data = characters_collection.find_one({"_id": char_id})
@@ -50,7 +100,9 @@ class Character:
     
     @classmethod
     def show_characters(cls):
-        print(f"Showing characters:\n{[char["name"] for char in characters_collection.find()]}")
+        print("Showing characters:")
+        for char in characters_collection.find():
+            print(f"- {char.get('name', '[Unnamed]')}")
         return 
     
     @classmethod
@@ -60,7 +112,7 @@ class Character:
             return cls(**data)
         return None
     
-    #other functions
+    #class methods
     @classmethod
     def from_dict(cls, data):
         return cls(
@@ -76,6 +128,24 @@ class Character:
             cyberware=data.get("cyberware", []),
             relationships=data.get("relationships", []),
         )
+    
+    @classmethod
+    def make_character(cls, file="characters.json"):
+        data_dict = cls.select_character_from_file(file)
+        if data_dict != None:
+            return Character.from_dict(data_dict)
+        else:
+            return data_dict
+        
+    #instance methods
+    def _stamp(self):
+        self.last_updated = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        
+    def get_editable_fields(self):
+        for k in self.__dict__:
+            if k not in ["name", "_id"]:
+                print(f"FIELD: {k} - CURRENT: {self.__dict__[k]}")
+        return
 
     def to_json(self, file):
         Character._ensure_character_file("characters.json")
@@ -110,11 +180,7 @@ class Character:
     def edit_fields_interactively(self):
         while True:
             print("\nEditable fields:")
-            for key in self.__dict__:
-                if key == "name":
-                    continue  # skip name
-
-                print(f"- {key} (current: {self.__dict__[key]})")
+            self.get_editable_fields()
 
             u_select = input(
                 "Select a value to change from the list (done if finished):\n"
@@ -128,7 +194,8 @@ class Character:
                 self.update_field(u_select, chg_val)
             else:
                 print("Invalid field. Try again!")
-
+    
+    #static methods
     @staticmethod
     def select_character_from_file(file):
         Character._ensure_character_file("characters.json")
@@ -143,14 +210,6 @@ class Character:
             if user_i == data[d_item]["name"]:
                 return data[d_item]
         return None
-
-    @classmethod
-    def make_character(cls, file="characters.json"):
-        data_dict = cls.select_character_from_file(file)
-        if data_dict != None:
-            return Character.from_dict(data_dict)
-        else:
-            return data_dict
 
     @staticmethod
     def delete_character():
@@ -181,81 +240,48 @@ class Character:
             with open(file, "w") as f:
                 json.dump({}, f, indent=4)
 
-
-def app():
-
-    Character._ensure_character_file("characters.json")
-
-    u_choice = input(
-        "Select mode\nC for Create Character, L for Load Character with an option to modify, D for delete character\n"
-    )
-
-    if u_choice.lower() == "c":
-        c_name = input("Name your character\n")
-        character = Character(name=c_name)
-        c_handle = input("Input character handle, if any. Select enter if none.\n")
-        character.handle = c_handle
-        c_sex = input("Enter character sex.\n")
-        character.sex = c_sex
-        c_age = input("Enter character age\n")
-        character.age = c_age
-        c_role = input("Enter character role\n")
-        character.role = c_role
-        c_desc = input("Enter character physical description.\n")
-        character.description = c_desc
-        c_major = input("Enter Character Major Skills separated by a comma.\n")
-        character.major_skills = c_major.split(",")
-        c_minor = input("Enter Character Minor Skills separated by a comma.\n")
-        character.minor_skills = c_minor.split(",")
-        c_cyber = input("Enter character cyberware, separated by a comma\n")
-        character.cyberware = c_cyber.split(",")
-        c_relationships = input(
-            "Enter character's personal relationships, separated by a comma.\n"
-        )
-        character.relationships = c_relationships.split(",")
-
-        print(character.__dict__.items())
-
-        c_save = input("Save? (yes/no/db)\n")
-        if c_save.lower() == "yes":
-            character.to_json("characters.json")
-        elif c_save.lower() == "db":
-            character.save_to_db()
-        else:
-            print("End of Line.")
-
-    if u_choice.lower() == "l":
-        try:
-            Character.show_characters()
-            u_sel_db = input("Select character from database or loc to use local:\n")
-            loaded_character = Character.load_by_name(u_sel_db)
-            print(loaded_character.name)
+    @staticmethod
+    def sync_json_to_db(file="characters.json"):
+        Character._ensure_character_file(file)
+        with open(file, "r") as f:
+            data = json.load(f)
+        
+        for name_key, char_data in data.items():
+            raw_id = char_data.get("_id")
             
-        except Exception as e:
-            print(e)
+            try:
+                char_data["_id"] = ObjectId(raw_id)
+            except Exception:
+                pass #leave as-is if it's not an ObjectId-like string
             
-            character = Character.make_character()
-            if character != None:
-                pprint.pprint(character.as_ordered_dict())
-                u_yn = input("Would you like to edit features? (y/n)\n").lower()
-                if u_yn.lower() not in ["y", "n"]:
-                    print("invalid input")
+            existing = characters_collection.find_one({"_id": char_data.get("_id")})
+            
+            if existing:
+                #update existing character
+                characters_collection.update_one(
+                    {"_id": char_data["_id"]}, {"$set": char_data}, upsert=True
+                )
+                print(f"🔄 Updated '{char_data['name']}' in database.")
+            else:
+                # Insert new character
+                characters_collection.insert_one(char_data)
+                print(f"⬆️  Inserted '{char_data['name']}' into database.")
+    
+    @staticmethod
+    def sync_db_to_json(file="characters.json"):
+        Character._ensure_character_file(file)
 
-                if u_yn.lower() == "y":
-                    character.edit_fields_interactively()
+        data = {}
+        for char in characters_collection.find():
+            file_key = char["name"].replace(" ", "_")
+            
+            char["_id"] = str(char["_id"])
+            
+            data[file_key] = char
 
-                    save = input("Save changes? (y/n)\n").lower()
-                    if save == "y":
-                        character.to_json("characters.json")
-                        print("Character updated and saved.")
-                    else:
-                        print("Changes discarded.")
-                else:
-                    print("Load completed.")
+        with open(file, "w") as f:
+            json.dump(data, f, indent=4)
 
-    if u_choice.lower() == "d":
-        Character.delete_character()
-
-
-if __name__ == "__main__":
-    app()
+        print(f"📥 Pulled {len(data)} characters from database to '{file}'.")
+    
+    

@@ -1,4 +1,4 @@
-from character_module import *
+from app import app
 
 while True:
     app()
