@@ -223,7 +223,11 @@ class Character:
 
         with open(file, "w") as fi:
             json.dump(data, fi, indent=4)
-
+        
+        doomed_char = characters_collection.find_one({"name": file_name})
+        characters_collection.delete_one({"_id": doomed_char.get("_id")})
+        print(f"Character {file_name} successfully deleted! 💥")
+        
     @staticmethod
     def _ensure_character_file(file="chracters.json"):
         if not os.path.exists(file):
