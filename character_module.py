@@ -295,4 +295,46 @@ class Character:
 
         print(f"📥 Pulled {len(data)} characters from database to '{file}'.")
     
-    
+    @staticmethod
+    def sync_bi_directional(file="chracters.json"):
+        #load JSON
+        with open(file, "r") as f:
+            json_data = json.load(f)
+            
+        #load MongoDB Data
+        mongo_data = {char["_id"]: char for char in characters_collection.find()}
+        
+        #merge keys from both sides
+        all_ids = set(json_data.keys()) | set(mongo_data.keys())
+        
+        merged_data = {}
+        
+        for _id in all_ids:
+            json_char = json_data.get(_id)
+            mongo_char = mongo_data.get(_id)
+            
+            if json_char and mongo_char:
+                #both exist, compare timestamps
+                json_time = json_char.get("last_updated", "")
+                mongo_time = mongo_char.get("last_updated", "")
+                
+                if json_time > mongo_time:
+                    #JSON is newer, update DB
+                    characters_collection.update_one({"_id": _id}, {"$set": json_char}, upsert=True)
+                    merged_data[_id] = json_char
+                else:
+                    #MongoDb is newer or same, update JSON
+                    merged_data[_id] = mongo_char
+                    
+            elif json_char and not mongo_char:
+                #only in JSON, insert into DB
+                characters_collection.insert_one(json_char)
+                merged_data[_id] = json_char
+                
+            elif mongo_char and not json_char:
+                #only in DB, add to JSON
+                merged_data[_id] = mongo_char
+                
+        #write merged data back to JSON file
+        with open(file, "w") as f:
+            json.dump(merged_data, f, indent=4)

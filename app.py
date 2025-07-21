@@ -89,11 +89,13 @@ def app(qt_app):
         Character.delete_character()
 
     if u_choice.lower() == "s":
-        sync_choice = input("Sync mode: (push: json→db, pull: db→json):\n").lower()
+        sync_choice = input("Sync mode: (push: json→db, pull: db→json, bi-directional: bidirectional):\n").lower()
         if sync_choice == "push":
             Character.sync_json_to_db()
         elif sync_choice == "pull":
             Character.sync_db_to_json()
+        elif sync_choice == "bidirectional":
+            Character.sync_bi_directional()
         else:
             print("Invalid sync option.")
 
