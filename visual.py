@@ -14,12 +14,13 @@ class ShowWidget(QtWidgets.QWidget):
 
         # create a widget to hold the layout contents
         content_widget = QtWidgets.QWidget()
+        content_widget.setStyleSheet("background-color: #2a2a2a")
         layout = QtWidgets.QVBoxLayout(content_widget)
 
         if data:
             for key, value in data.items():
                 label = QtWidgets.QLabel(
-                    f"<span style='font-size:12pt; color:#08B7F4;'><b>{key.upper()}:</b></span> <span style='font-size:10pt; color:#07df42;'>{value}</span>"
+                    f"<span style='font-size:12pt; color:#08B7F4;'><b>{key.upper()}:</b></span> <span style='font-size:11pt; color:#F5F7F2;'>{value}</span>"
                 )
                 label.setWordWrap(True)  # word wrap for long text
                 layout.addWidget(label)
