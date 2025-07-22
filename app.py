@@ -8,7 +8,9 @@ db = connect_to_db()
 character_store = CharacterStore(db=db)
 
 def app(qt_app):
-
+    #hold open widgets
+    open_windows = []
+    
     Character._ensure_character_file("characters.json")
 
     u_choice = input(
@@ -58,11 +60,13 @@ def app(qt_app):
 
             # Show Visual Window
             widget = ShowWidget(data=loaded_character.__dict__)
+            widget.destroyed.connect(lambda: open_windows.remove(widget))
             widget.show()
+            open_windows.append(widget)
             qt_app.processEvents()  # allow UI to render
 
-            input("Press enter to close window...")
-            widget.close()
+            # input("Press enter to close window...")
+            # widget.close()
 
             u_db_up = input("Update character? (y/n)")
             if u_db_up == "y":

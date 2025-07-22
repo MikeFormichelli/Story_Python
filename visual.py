@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 
 class ShowWidget(QtWidgets.QWidget):
@@ -7,7 +7,11 @@ class ShowWidget(QtWidgets.QWidget):
 
         self.setWindowTitle("Character Viewer")
         self.setFixedSize(400, 600)
-
+        
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.activateWindow()
+        self.raise_()
+        
         # scrollable area:
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidgetResizable(True)
