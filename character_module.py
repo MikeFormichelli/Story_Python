@@ -5,7 +5,13 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from bson import ObjectId
 import textwrap
-from db import characters_collection
+# from db import characters_collection
+
+from db import connect_to_db
+from character_store import CharacterStore
+
+characters_collection = connect_to_db()
+characters_data = CharacterStore(db=characters_collection)
 
 class Character:
     def __init__(
@@ -23,6 +29,7 @@ class Character:
         relationships=None,
         _id=None,
         last_updated=None,
+        store=None,
         **kwargs
     ):
         self.name = name
@@ -38,6 +45,7 @@ class Character:
         self.relationships = relationships or []
         self._id = _id or str(uuid.uuid4()) #generate unique ids
         self.last_updated = last_updated or datetime.now(timezone.utc).isoformat()
+        self.store = store
         
         #absorb kwargs
         for key, value in kwargs.items():
@@ -50,25 +58,22 @@ class Character:
     def save_to_db(self):
         self._stamp()
         
-        existing = characters_collection.find_one({"_id": self._id})
+        existing = self.store.find_one({"_id": self._id})
         if existing:
             print("Character already exists in database")
             return
-        characters_collection.insert_one(self.to_dict())
+        self.store.insert_one(self.to_dict())
         
     def update_db(self):
         while True:
-            fresh_data = characters_collection.find_one({"_id": self._id})
+            fresh_data = self.store.find_one({"_id": self._id})
             if not fresh_data:
                 print("Character not found in database.")
                 return
             self.__dict__.update(fresh_data)
             
             print("\nEditable fields:")
-            # for key in self.__dict__:
-            #     if key in ["name", "_id"]:
-            #         continue  # skip name
-            #     print(f"- {key} (current: {self.__dict__[key]})")
+
             self.get_editable_fields()
 
             u_select = input(
@@ -88,35 +93,36 @@ class Character:
                     new_val = chg_val
                     
                 self._stamp()
-                characters_collection.update_one({"_id": self._id}, {"$set": {u_select: new_val, "last_updated": self.last_updated}})
+                self.store.update_one({"_id": self._id}, {"$set": {u_select: new_val, "last_updated": self.last_updated}})
                 print(f"Updated '{u_select}' successfully.")
             else:
                 print("Invalid field. Try again!")
+                
         # Final sync after all updates
-        fresh_data = characters_collection.find_one({"_id": self._id})
+        fresh_data = self.store.find_one({"_id": self._id})
         if fresh_data:
             self.__dict__.update(fresh_data)
             print("✅ Final sync complete. Character is up-to-date.")
 
     @classmethod
-    def load_from_db(cls, char_id):
-        data = characters_collection.find_one({"_id": char_id})
+    def load_from_db(cls, store, char_id):
+        data = store.find_one({"_id": char_id})
         if data:
             return cls(**data)
         return None
     
     @classmethod
-    def show_characters(cls):
+    def show_characters(cls, store):
         print("Showing characters:")
-        for char in characters_collection.find():
+        for char in store.find():
             print(f"- {char.get('name', '[Unnamed]')}")
         return 
     
     @classmethod
-    def load_by_name(cls, char_name):
-        data = characters_collection.find_one({"name": char_name})
+    def load_by_name(cls, store, char_name):
+        data = store.find_one({"name": char_name})
         if data:
-            return cls(**data)
+            return cls(store=store, **data)
         return None
     
     #class methods
@@ -219,7 +225,7 @@ class Character:
         return None
 
     @staticmethod
-    def delete_character():
+    def delete_character(store):
         Character._ensure_character_file("characters.json")
         file = "characters.json"
         with open(file, "r") as f:
@@ -231,8 +237,8 @@ class Character:
         with open(file, "w") as fi:
             json.dump(data, fi, indent=4)
         
-        doomed_char = characters_collection.find_one({"name": file_name})
-        characters_collection.delete_one({"_id": doomed_char.get("_id")})
+        doomed_char = store.find_one({"name": file_name})
+        store.delete_one({"_id": doomed_char.get("_id")})
         print(f"Character {file_name} successfully deleted! 💥")
         
     @staticmethod
@@ -252,7 +258,7 @@ class Character:
                 json.dump({}, f, indent=4)
 
     @staticmethod
-    def sync_json_to_db(file="characters.json"):
+    def sync_json_to_db(store, file="characters.json"):
         Character._ensure_character_file(file)
         with open(file, "r") as f:
             data = json.load(f)
@@ -265,25 +271,25 @@ class Character:
             except Exception:
                 pass #leave as-is if it's not an ObjectId-like string
             
-            existing = characters_collection.find_one({"_id": char_data.get("_id")})
+            existing = store.find_one({"_id": char_data.get("_id")})
             
             if existing:
                 #update existing character
-                characters_collection.update_one(
+                store.update_one(
                     {"_id": char_data["_id"]}, {"$set": char_data}, upsert=True
                 )
                 print(f"🔄 Updated '{char_data['name']}' in database.")
             else:
                 # Insert new character
-                characters_collection.insert_one(char_data)
+                store.insert_one(char_data)
                 print(f"⬆️  Inserted '{char_data['name']}' into database.")
     
     @staticmethod
-    def sync_db_to_json(file="characters.json"):
+    def sync_db_to_json(store, file="characters.json"):
         Character._ensure_character_file(file)
 
         data = {}
-        for char in characters_collection.find():
+        for char in store.find():
             file_key = char["name"].replace(" ", "_")
             
             char["_id"] = str(char["_id"])
@@ -296,13 +302,13 @@ class Character:
         print(f"📥 Pulled {len(data)} characters from database to '{file}'.")
     
     @staticmethod
-    def sync_bi_directional(file="chracters.json"):
+    def sync_bi_directional(store, file="chracters.json"):
         #load JSON
         with open(file, "r") as f:
             json_data = json.load(f)
             
         #load MongoDB Data
-        mongo_data = {char["_id"]: char for char in characters_collection.find()}
+        mongo_data = {char["_id"]: char for char in store.find()}
         
         #merge keys from both sides
         all_ids = set(json_data.keys()) | set(mongo_data.keys())
@@ -320,7 +326,7 @@ class Character:
                 
                 if json_time > mongo_time:
                     #JSON is newer, update DB
-                    characters_collection.update_one({"_id": _id}, {"$set": json_char}, upsert=True)
+                    store.update_one({"_id": _id}, {"$set": json_char}, upsert=True)
                     merged_data[_id] = json_char
                 else:
                     #MongoDb is newer or same, update JSON
@@ -328,7 +334,7 @@ class Character:
                     
             elif json_char and not mongo_char:
                 #only in JSON, insert into DB
-                characters_collection.insert_one(json_char)
+                store.insert_one(json_char)
                 merged_data[_id] = json_char
                 
             elif mongo_char and not json_char:

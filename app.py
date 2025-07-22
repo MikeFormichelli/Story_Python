@@ -1,6 +1,11 @@
 import pprint
 from character_module import Character
 from visual import ShowWidget
+from db import connect_to_db
+from character_store import CharacterStore
+
+db = connect_to_db()
+character_store = CharacterStore(db=db)
 
 def app(qt_app):
 
@@ -12,7 +17,7 @@ def app(qt_app):
 
     if u_choice.lower() == "c":
         c_name = input("Name your character\n")
-        character = Character(name=c_name)
+        character = Character(name=c_name, store=character_store)
         c_handle = input("Input character handle, if any. Select enter if none.\n")
         character.handle = c_handle
         c_sex = input("Enter character sex.\n")
@@ -46,26 +51,26 @@ def app(qt_app):
 
     if u_choice.lower() == "l":
         try:
-            Character.show_characters()
+            Character.show_characters(store=character_store)
             u_sel_db = input("Select character from database or loc to use local:\n")
-            loaded_character = Character.load_by_name(u_sel_db)
+            loaded_character = Character.load_by_name(char_name=u_sel_db, store=character_store)
             print(loaded_character.name)
-            
-            #Show Visual Window
+
+            # Show Visual Window
             widget = ShowWidget(data=loaded_character.__dict__)
             widget.show()
-            qt_app.processEvents() #allow UI to render
-            
+            qt_app.processEvents()  # allow UI to render
+
             input("Press enter to close window...")
             widget.close()
-            
+
             u_db_up = input("Update character? (y/n)")
             if u_db_up == "y":
                 loaded_character.update_db()
 
         except Exception as e:
             print(e)
-        
+
             character = Character.make_character()
             if character != None:
                 pprint.pprint(character.as_ordered_dict())
@@ -89,13 +94,15 @@ def app(qt_app):
         Character.delete_character()
 
     if u_choice.lower() == "s":
-        sync_choice = input("Sync mode: (push: json→db, pull: db→json, bi-directional: bidirectional):\n").lower()
+        sync_choice = input(
+            "Sync mode: (push: json→db, pull: db→json, bi-directional: bidirectional):\n"
+        ).lower()
         if sync_choice == "push":
-            Character.sync_json_to_db()
+            Character.sync_json_to_db(store=character_store)
         elif sync_choice == "pull":
-            Character.sync_db_to_json()
+            Character.sync_db_to_json(store=character_store)
         elif sync_choice == "bidirectional":
-            Character.sync_bi_directional()
+            Character.sync_bi_directional(store=character_store)
         else:
             print("Invalid sync option.")
 
