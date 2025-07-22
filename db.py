@@ -3,14 +3,18 @@ import json
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from pymongo.errors import ServerSelectionTimeoutError
+from character_store import CharacterStore
 
 #Default path to local JSON data:
 DEFAULT_JSON_FILE = "characters.json"
 
+#globals:
 client = None
 db = None
 characters_collection = None
+character_store = None # <_-centralized store instance
 
+#load environment
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 db_name = os.getenv("DB_NAME")
@@ -23,16 +27,11 @@ def connect_to_db():
         db = client[db_name]
         characters_collection = db["characters"]
         print("✅ Connected to MongoDB.")
-        return True
+        return characters_collection
     
     except ServerSelectionTimeoutError:
         print("⚠️ MongoDB not available. Falling back to JSON.")
-        if os.path.exists(DEFAULT_JSON_FILE):
-            with open(DEFAULT_JSON_FILE, "r") as f:
-                characters_data = json.load(f)
-        else:
-            characters_data = {}
-            print("❌ No JSON file found.")
+        return None
     
 def load_characters_fallback():
     if os.path.exists(DEFAULT_JSON_FILE):
@@ -42,16 +41,16 @@ def load_characters_fallback():
         print("❌ No JSON file found.")
         return {}
     
-# Call this at startup
-db_connected = connect_to_db()
+# Init once at import
+collection = connect_to_db()
 
 # Then you can access data like this in your app:
-if db_connected:
-    characters_data = {
-        doc["name"]: doc for doc in characters_collection.find()
-    }
+if collection is not None:
+    character_store = CharacterStore(db=collection)
 else:
-    characters_data = load_characters_fallback()
+    print("⚠️ Error fetching data from MongoDB. Falling back to JSON.")
+    fallback_data = load_characters_fallback()
+    character_store = CharacterStore()
     
 # #connect to client
 # client = MongoClient(mongo_uri)

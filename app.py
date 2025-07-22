@@ -1,11 +1,8 @@
 import pprint
 from character_module import Character
 from visual import ShowWidget
-from db import connect_to_db
-from character_store import CharacterStore
+from db import character_store
 
-db = connect_to_db()
-character_store = CharacterStore(db=db)
 
 def app(qt_app):
     #hold open widgets

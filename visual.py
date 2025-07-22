@@ -23,11 +23,12 @@ class ShowWidget(QtWidgets.QWidget):
 
         if data:
             for key, value in data.items():
-                label = QtWidgets.QLabel(
-                    f"<span style='font-size:12pt; color:#08B7F4;'><b>{key.upper()}:</b></span> <span style='font-size:11pt; color:#F5F7F2;'>{value}</span>"
-                )
-                label.setWordWrap(True)  # word wrap for long text
-                layout.addWidget(label)
+                if key not in ["store", "_id"]:
+                    label = QtWidgets.QLabel(
+                        f"<span style='font-size:12pt; color:#08B7F4;'><b>{key.upper()}:</b></span> <span style='font-size:11pt; color:#F5F7F2;'>{value}</span>"
+                    )
+                    label.setWordWrap(True)  # word wrap for long text
+                    layout.addWidget(label)
         else:
             label = QtWidgets.QLabel("No data loaded.")
             label.setWordWrap(True)

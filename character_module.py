@@ -7,11 +7,11 @@ from bson import ObjectId
 import textwrap
 # from db import characters_collection
 
-from db import connect_to_db
-from character_store import CharacterStore
+# from db import connect_to_db
+# from character_store import CharacterStore
 
-characters_collection = connect_to_db()
-characters_data = CharacterStore(db=characters_collection)
+# characters_collection = connect_to_db()
+# characters_data = CharacterStore(db=characters_collection)
 
 class Character:
     def __init__(
@@ -47,13 +47,30 @@ class Character:
         self.last_updated = last_updated or datetime.now(timezone.utc).isoformat()
         self.store = store
         
+        if store is None:
+            raise ValueError("A store (CharacterStore) must be provided.")
+        
         #absorb kwargs
         for key, value in kwargs.items():
             setattr(self, key, value)
             
     #db functions
     def to_dict(self):
-        return self.__dict__
+        return {
+        "name": self.name,
+        "handle": self.handle,
+        "sex": self.sex,
+        "age": self.age,
+        "role": self.role,
+        "description": self.description,
+        "experience_level": self.experience_level,
+        "major_skills": self.major_skills,
+        "minor_skills": self.minor_skills,
+        "cyberware": self.cyberware,
+        "relationships": self.relationships,
+        "_id": self._id,
+        "last_updated": self.last_updated,
+    }
     
     def save_to_db(self):
         self._stamp()
@@ -302,7 +319,7 @@ class Character:
         print(f"📥 Pulled {len(data)} characters from database to '{file}'.")
     
     @staticmethod
-    def sync_bi_directional(store, file="chracters.json"):
+    def sync_bi_directional(store, file="characters.json"):
         #load JSON
         with open(file, "r") as f:
             json_data = json.load(f)
