@@ -67,6 +67,7 @@ def app(qt_app):
 
             u_db_up = input("Update character? (y/n)")
             if u_db_up == "y":
+                widget.close()
                 loaded_character.update_db()
 
         except Exception as e:
