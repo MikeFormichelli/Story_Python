@@ -19,6 +19,7 @@ class Character:
         self.minor_skills = []
         self.cyberware = []
         self.relationships = []
+        self.background = ""
         self.last_updated = datetime.now(timezone.utc).isoformat() + "Z"
 
         if data:
@@ -44,6 +45,7 @@ class Character:
             "minor_skills": self.minor_skills,
             "cyberware": self.cyberware,
             "relationships": self.relationships,
+            "background": self.background,
             "last_updated": self.last_updated,
         }
     

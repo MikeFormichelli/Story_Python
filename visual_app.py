@@ -96,6 +96,7 @@ class CharacterApp(QWidget):
             "minor_skills",
             "cyberware",
             "relationships",
+            "background",
         ]:
             # Fields that should use QTextEdit
             multiline_fields = {
@@ -104,6 +105,7 @@ class CharacterApp(QWidget):
                 "major_skills",
                 "minor_skills",
                 "cyberware",
+                "background",
             }
 
             if field in multiline_fields:
