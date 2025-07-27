@@ -193,6 +193,7 @@ class CharacterApp(QWidget):
 
         self.editing = True
         self.save_btn.setEnabled(True)
+        self.browse_btn.setEnabled(True)
 
     def edit_character(self):
         if not self.current_char:
