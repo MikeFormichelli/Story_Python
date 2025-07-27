@@ -144,6 +144,7 @@ class CharacterApp(QWidget):
 
     # methods
     def load_all_characters(self):
+        Character.sync_bi_directional(store=store)
         self.list_widget.clear()
         for char in self.store.find():
             self.list_widget.addItem(f"{char.get('name')} ({char.get('handle')})")
