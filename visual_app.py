@@ -236,6 +236,7 @@ class CharacterApp(QWidget):
 
         self.editing = False
         self.save_btn.setEnabled(False)
+        self.browse_btn.setEnabled(False)
 
     def delete_character(self):
         if not self.current_char:
