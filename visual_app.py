@@ -185,6 +185,8 @@ class CharacterApp(QWidget):
         self.editing = False
 
     def new_character(self):
+        self.image_path_input.setText("")
+        self.image_label.setText("[No Image]")
         self.current_char = Character(self.store)
         for field in self.inputs:
             self.inputs[field].clear()
@@ -237,6 +239,7 @@ class CharacterApp(QWidget):
         self.editing = False
         self.save_btn.setEnabled(False)
         self.browse_btn.setEnabled(False)
+        
 
     def delete_character(self):
         if not self.current_char:
