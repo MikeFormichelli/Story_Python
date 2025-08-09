@@ -26,8 +26,9 @@ def connect_to_db():
         client.admin.command("ping") #quick connectivity check
         db = client[db_name]
         characters_collection = db["characters"]
+        items_collection = db["newItems"]
         print("✅ Connected to MongoDB.")
-        return characters_collection
+        return {"characters": characters_collection, "items": items_collection}
     
     except ServerSelectionTimeoutError:
         print("⚠️ MongoDB not available. Falling back to JSON.")
@@ -42,28 +43,18 @@ def load_characters_fallback():
         return {}
     
 # Init once at import
-collection = connect_to_db()
+collections = connect_to_db()
 
-# Then you can access data like this in your app:
-if collection is not None:
-    character_store = CharacterStore(db=collection)
-else:
-    print("⚠️ Error fetching data from MongoDB. Falling back to JSON.")
-    fallback_data = load_characters_fallback()
-    character_store = CharacterStore()
-    
-# #connect to client
-# client = MongoClient(mongo_uri)
-    
-# print(client.list_database_names())
-
-# db = client[db_name]
-# characters_collection = db["characters"]
-
-
-# try:
-#     # This forces a connection attempt
-#     client.server_info()
-# except ServerSelectionTimeoutError:
-#     print("❌ MongoDB is not running or cannot be reached.")
-#     exit(1)
+def get_data_stores():
+    collections = connect_to_db()
+    if collections:
+        return {
+            "character_store": CharacterStore(),
+            "items_collection": collections["items"]
+        }
+    else:
+        fallback_data = load_characters_fallback()
+        return {
+            "character_store": CharacterStore(),
+            "items_collection": None
+        }
