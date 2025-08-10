@@ -30,7 +30,7 @@ class CharacterApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Character Manager")
-        self.setMinimumSize(400, 600)  # avoid fixed height
+        self.setMinimumSize(600, 800)  # avoid fixed height
         # self.store = CharacterStore(db=connect_to_db())
         stores = get_data_stores()
         self.store = stores["character_store"]
@@ -165,7 +165,7 @@ class CharacterApp(QWidget):
     def init_items_tab(self):
         items_tab = QWidget()
         layout = QVBoxLayout(items_tab)
-        
+
         # list of items:
         self.items_list_widget = QListWidget()
         self.items_list_widget.itemClicked.connect(self.load_selected_item)
@@ -321,7 +321,7 @@ class CharacterApp(QWidget):
     def load_items_collection(self):
         self.items = []
         self.items_list_widget.clear()
-        
+
         try:
             cursor = self.items_collection.find()
             self.items = list(cursor)
@@ -335,20 +335,21 @@ class CharacterApp(QWidget):
         if 0 <= index < len(self.items):
             selected_item = self.items[index]
             self.display_item_details(selected_item)
-            
+
     def display_item_details(self, item):
-        #clear existing layout
+        # clear existing layout
         while self.item_detail_layout.count():
             child = self.item_detail_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
-                
+
         # add key-value labels
         for key, value in item.items():
             key_label = QLabel(str(key))
             val_label = QLabel(str(value))
             val_label.setWordWrap(True)
             self.item_detail_layout.addRow(key_label, val_label)
+
 
 def main():
     app = QApplication(sys.argv)
