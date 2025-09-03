@@ -25,6 +25,9 @@ from visual_character_module import Character
 # from db import character_store as store
 from db import get_data_stores
 
+# from items tab import the items and tab
+from items_tab import ItemsTab
+
 
 class CharacterApp(QWidget):
     def __init__(self):
@@ -67,7 +70,9 @@ class CharacterApp(QWidget):
         self.tabs.addTab(character_tab, "Characters")
 
         # create the other Collection tab
-        self.init_items_tab()
+        # self.init_items_tab()
+        self.items_tab = ItemsTab(self.items_collection)
+        self.tabs.addTab(self.items_tab, "Items")
 
         self.load_all_characters()
 
@@ -162,32 +167,38 @@ class CharacterApp(QWidget):
         layout.addLayout(btn_layout)
         # self.setLayout(layout)
 
-    def init_items_tab(self):
-        items_tab = QWidget()
-        layout = QVBoxLayout(items_tab)
+    # def init_items_tab(self):
+    #     items_tab = QWidget()
+    #     layout = QVBoxLayout(items_tab)
 
-        # list of items:
-        self.items_list_widget = QListWidget()
-        self.items_list_widget.itemClicked.connect(self.load_selected_item)
-        layout.addWidget(QLabel("Added Items"))
-        layout.addWidget(self.items_list_widget)
+    #     # list of items:
+    #     self.items_table = QTableWidget()
+    #     self.items_table.setColumnCount(2)
+    #     self.items_table.setHorizontalHeaderLabels(["Name", "Type"])
+    #     self.items_table.setEditTriggers(QTableWidget.NoEditTriggers)  # read-only
+    #     self.items_table.setSelectionBehavior(QTableWidget.SelectRows)
+    #     self.items_table.setSelectionMode(QTableWidget.SingleSelection)
+    #     self.items_table.cellClicked.connect(self.load_selected_item)
+    #     # self.items_table.itemClicked.connect(self.load_selected_item)
+    #     layout.addWidget(QLabel("Added Items"))
+    #     layout.addWidget(self.items_table)
 
-        # scrollable area for dynamic content
-        self.items_detail_scroll = QScrollArea()
-        self.items_detail_scroll.setWidgetResizable(True)
+    #     # scrollable area for dynamic content
+    #     self.items_detail_scroll = QScrollArea()
+    #     self.items_detail_scroll.setWidgetResizable(True)
 
-        self.item_detail_container = QWidget()
-        self.item_detail_layout = QFormLayout()
-        self.item_detail_container.setLayout(self.item_detail_layout)
+    #     self.item_detail_container = QWidget()
+    #     self.item_detail_layout = QFormLayout()
+    #     self.item_detail_container.setLayout(self.item_detail_layout)
 
-        self.items_detail_scroll.setWidget(self.item_detail_container)
-        layout.addWidget(self.items_detail_scroll)
+    #     self.items_detail_scroll.setWidget(self.item_detail_container)
+    #     layout.addWidget(self.items_detail_scroll)
 
-        # add the tab
-        self.tabs.addTab(items_tab, "Items")
+    # # add the tab
+    # self.tabs.addTab(items_tab, "Items")
 
-        # populate from other collection
-        self.load_items_collection()
+    # # populate from other collection
+    # self.load_items_collection()
 
     # methods
 
@@ -318,37 +329,52 @@ class CharacterApp(QWidget):
             self.image_label.setText("[No Image]")
 
     # items methods
-    def load_items_collection(self):
-        self.items = []
-        self.items_list_widget.clear()
+    # def load_items_collection(self):
+    #     self.items = []
+    #     # self.items_list_widget.clear()
+    #     self.items_table.setRowCount(0)
 
-        try:
-            cursor = self.items_collection.find()
-            self.items = list(cursor)
-            for item in self.items:
-                self.items_list_widget.addItem(item.get("name", str(item.get("_id"))))
-        except Exception as e:
-            print("Error loading items:", e)
+    #     try:
+    #         cursor = self.items_collection.find()
+    #         self.items = list(cursor)
+    #         # for item in self.items:
+    #         #     self.items_list_widget.addItem(
+    #         #         f"{item.get("name", str(item.get("_id")))} - {item.get("type", str(item.get("_id")))}"
+    #         #     )
+    #         self.items_table.setRowCount(len(self.items))
+    #         for row, item in enumerate(self.items):
+    #             name = item.get("name", str(item.get("_id")))
+    #             type_ = item.get("type", "unknown")
+    #             self.items_table.setItem(row, 0, QTableWidgetItem(name))
+    #             self.items_table.setItem(row, 1, QTableWidgetItem(type_))
+    #             # self.items_list_widget.addWidget(label, row, column, alignment=Qt.AlignmentFlag.AlignCenter)
+    #         header = self.items_table.horizontalHeader()
 
-    def load_selected_item(self):
-        index = self.items_list_widget.currentRow()
-        if 0 <= index < len(self.items):
-            selected_item = self.items[index]
-            self.display_item_details(selected_item)
+    #         header.setSectionResizeMode(0, QHeaderView.Stretch)
+    #         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
 
-    def display_item_details(self, item):
-        # clear existing layout
-        while self.item_detail_layout.count():
-            child = self.item_detail_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+    #     except Exception as e:
+    #         print("Error loading items:", e)
 
-        # add key-value labels
-        for key, value in item.items():
-            key_label = QLabel(str(key))
-            val_label = QLabel(str(value))
-            val_label.setWordWrap(True)
-            self.item_detail_layout.addRow(key_label, val_label)
+    # def load_selected_item(self, row, column):
+    #     # index = self.items_list_widget.currentRow()
+    #     if 0 <= row < len(self.items):
+    #         selected_item = self.items[row]
+    #         self.display_item_details(selected_item)
+
+    # def display_item_details(self, item):
+    #     # clear existing layout
+    #     while self.item_detail_layout.count():
+    #         child = self.item_detail_layout.takeAt(0)
+    #         if child.widget():
+    #             child.widget().deleteLater()
+
+    #     # add key-value labels
+    #     for key, value in item.items():
+    #         key_label = QLabel(str(key))
+    #         val_label = QLabel(str(value))
+    #         val_label.setWordWrap(True)
+    #         self.item_detail_layout.addRow(key_label, val_label)
 
 
 def main():
