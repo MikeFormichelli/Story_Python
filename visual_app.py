@@ -1,7 +1,5 @@
-import sys
 import os
 from PySide6.QtWidgets import (
-    QApplication,
     QWidget,
     QVBoxLayout,
     QPushButton,
@@ -74,10 +72,15 @@ class CharacterApp(QWidget):
         # create the other Collection tab if db connection
         if self.items_collection is not None:
 
-            self.items_tab = ItemsTab(self.items_collection)
+            self.items_tab = ItemsTab(
+                self.items_collection, columns=["name", "cost", "type"]
+            )
             self.tabs.addTab(self.items_tab, "Items")
 
-            self.cyberware_items = ItemsTab(self.cyberware_items)
+            self.cyberware_items = ItemsTab(
+                self.cyberware_items,
+                columns=["name", "cost", "install", "brief_description", "foundation"],
+            )
             self.tabs.addTab(self.cyberware_items, "G-Cyberware")
 
         self.load_all_characters()
@@ -296,14 +299,3 @@ class CharacterApp(QWidget):
             self.image_label.setPixmap(scaled)
         else:
             self.image_label.setText("[No Image]")
-
-
-def main():
-    app = QApplication(sys.argv)
-    window = CharacterApp()
-    window.show()
-    sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()

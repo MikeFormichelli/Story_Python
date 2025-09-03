@@ -11,21 +11,25 @@ from PySide6.QtWidgets import (
 
 
 class ItemsTab(QWidget):
-    def __init__(self, items_collection):
+    def __init__(self, items_collection, columns=None):
         super().__init__()
 
         self.items_collection = items_collection
+        self.columns = columns or ["name", "type"]
+
         self.layout = QVBoxLayout(self)
 
         # list of items:
         self.items_table = QTableWidget()
-        self.items_table.setColumnCount(2)
-        self.items_table.setHorizontalHeaderLabels(["Name", "Type"])
+        self.items_table.setColumnCount(len(self.columns))
+        self.items_table.setHorizontalHeaderLabels(
+            [col.capitalize() for col in self.columns]
+        )
         self.items_table.setEditTriggers(QTableWidget.NoEditTriggers)  # read-only
         self.items_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.items_table.setSelectionMode(QTableWidget.SingleSelection)
         self.items_table.cellClicked.connect(self.load_selected_item)
-        self.layout.addWidget(QLabel("Added Items"))
+        self.layout.addWidget(QLabel("Items"))
         self.layout.addWidget(self.items_table)
 
         # scrollable area for dynamic content
@@ -53,20 +57,20 @@ class ItemsTab(QWidget):
             self.items_table.setRowCount(len(self.items))
 
             for row, item in enumerate(self.items):
-                name = item.get("name", str(item.get("_id")))
-                type_ = item.get("type", "unknown").upper()
-                self.items_table.setItem(row, 0, QTableWidgetItem(name))
-                self.items_table.setItem(row, 1, QTableWidgetItem(type_))
+                for col_idx, col_name in enumerate(self.columns):
+                    value = item.get(col_name, "")
+                    # special case: if value is ObjectId, convert to string
+                    value = str(value)
+                    self.items_table.setItem(row, col_idx, QTableWidgetItem(value))
 
             header = self.items_table.horizontalHeader()
-            header.setSectionResizeMode(0, QHeaderView.Stretch)
-            header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            for i in range(len(self.columns)):
+                header.setSectionResizeMode(i, QHeaderView.Stretch)
 
         except Exception as e:
             print("Error loading items:", e)
 
     def load_selected_item(self, row, column):
-        # index = self.items_list_widget.currentRow()
         if 0 <= row < len(self.items):
             selected_item = self.items[row]
             self.display_item_details(selected_item)
