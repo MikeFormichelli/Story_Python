@@ -39,7 +39,7 @@ class CharacterApp(QWidget):
         stores = get_data_stores()
         self.store = stores.get("character_store")
         self.items_collection = stores.get("items_collection", None)
-
+        self.cyberware_items = stores.get("cyberware_items", None)
         self.current_char = None
         self.editing = False
 
@@ -76,6 +76,9 @@ class CharacterApp(QWidget):
 
             self.items_tab = ItemsTab(self.items_collection)
             self.tabs.addTab(self.items_tab, "Items")
+
+            self.cyberware_items = ItemsTab(self.cyberware_items)
+            self.tabs.addTab(self.cyberware_items, "G-Cyberware")
 
         self.load_all_characters()
 

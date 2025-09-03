@@ -54,7 +54,7 @@ class ItemsTab(QWidget):
 
             for row, item in enumerate(self.items):
                 name = item.get("name", str(item.get("_id")))
-                type_ = item.get("type", "unknown")
+                type_ = item.get("type", "unknown").upper()
                 self.items_table.setItem(row, 0, QTableWidgetItem(name))
                 self.items_table.setItem(row, 1, QTableWidgetItem(type_))
 
