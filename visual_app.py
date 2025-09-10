@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QScrollArea,
     QTabWidget,
+    QDialog,
 )
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
@@ -25,6 +26,9 @@ from db import get_data_stores
 
 # from items tab import the items and tab
 from items_tab import ItemsTab
+
+# clickable label:
+from ClickableLabel import ClickableLabel
 
 
 class CharacterApp(QWidget):
@@ -50,10 +54,11 @@ class CharacterApp(QWidget):
         scroll.setWidget(scroll_content)
 
         # Layout for scroll content
-        self.form_layout = QVBoxLayout(scroll_content)
+        # self.form_layout = QVBoxLayout(scroll_content)
+        main_layout = QVBoxLayout(scroll_content)
 
         # Create UI inside scroll_content
-        self.init_ui()
+        self.init_ui(main_layout)
 
         # Main layout adds the scroll area
         main_layout = QVBoxLayout(self)
@@ -85,92 +90,95 @@ class CharacterApp(QWidget):
 
         self.load_all_characters()
 
-    def init_ui(self):
-        layout = self.form_layout
+    def init_ui(self, parent_layout):
 
         # character list
         self.list_widget = QListWidget()
         self.list_widget.itemClicked.connect(self.load_selected_character)
-        layout.addWidget(self.list_widget)
+        parent_layout.addWidget(self.list_widget)
+
+        # top row image & short fields:
+        top_row = QHBoxLayout()
 
         # image
+        self.image_label = ClickableLabel("[No Image]")
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setFixedSize(250, 200)
+        self.image_label.clicked.connect(self.open_full_image)
+
+        left_col = QVBoxLayout()
+        left_col.addWidget(self.image_label)
+
+        # path row
         image_path_layout = QHBoxLayout()
         self.image_path_input = QLineEdit()
         self.image_path_input.setReadOnly(True)
         self.browse_btn = QPushButton("Browse")
         self.browse_btn.clicked.connect(self.browse_image)
         self.browse_btn.setEnabled(False)
-        image_path_layout.addWidget(QLabel("Image Path: "))
+        image_path_layout.addWidget(QLabel("Path: "))
         image_path_layout.addWidget(self.image_path_input)
         image_path_layout.addWidget(self.browse_btn)
-        self.image_label = QLabel("[No Image]")
-        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_label.setFixedHeight(200)
-        layout.addWidget(self.image_label)
-        layout.addLayout(image_path_layout)
 
-        # form
-        self.form = QFormLayout()
+        left_col.addLayout(image_path_layout)
+        top_row.addLayout(left_col)
+
+        # right-side short fields:
+        quick_form = QFormLayout()
         self.inputs = {}
         self.inputs["image_path"] = self.image_path_input
-        for field in [
-            "name",
-            "handle",
-            "sex",
-            "age",
-            "role",
+
+        short_fields = ["name", "handle", "sex", "age", "role", "experience_level"]
+        for field in short_fields:
+            widget = QLineEdit()
+            widget.setReadOnly(True)
+            self.inputs[field] = widget
+            quick_form.addRow(field.capitalize(), widget)
+
+        top_row.addLayout(quick_form)
+        parent_layout.addLayout(top_row)
+
+        # --- long text fields (full width)---
+        long_form = QFormLayout()
+        multiline_fields = [
             "description",
-            "experience_level",
             "major_skills",
             "minor_skills",
             "cyberware",
             "relationships",
             "background",
-        ]:
-            # Fields that should use QTextEdit
-            multiline_fields = {
-                "description",
-                "relationships",
-                "major_skills",
-                "minor_skills",
-                "cyberware",
-                "background",
-            }
+        ]
 
-            if field in multiline_fields:
-                widget = QTextEdit()
-                widget.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-                widget.setReadOnly(True)
-                widget.setFixedHeight(60)  # adjust as needed
-            else:
-                widget = QLineEdit()
-                widget.setReadOnly(True)
-
+        for field in multiline_fields:
+            widget = QTextEdit()
+            widget.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+            widget.setReadOnly(True)
+            widget.setFixedHeight(60)
             self.inputs[field] = widget
-            self.form.addRow(field.capitalize(), widget)
+            long_form.addRow(field.capitalize(), widget)
 
-        layout.addLayout(self.form)
+        parent_layout.addLayout(long_form)
 
-        # buttons
+        # buttons at bottom
         btn_layout = QHBoxLayout()
 
         self.new_btn = QPushButton("New")
         self.new_btn.clicked.connect(self.new_character)
-        btn_layout.addWidget(self.new_btn)
 
         self.edit_btn = QPushButton("Edit")
         self.edit_btn.clicked.connect(self.edit_character)
-        btn_layout.addWidget(self.edit_btn)
 
         self.save_btn = QPushButton("Save")
         self.save_btn.clicked.connect(self.save_character)
-        btn_layout.addWidget(self.save_btn)
 
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_character)
-        btn_layout.addWidget(self.delete_btn)
 
-        layout.addLayout(btn_layout)
+        for b in (self.new_btn, self.edit_btn, self.save_btn, self.delete_btn):
+            btn_layout.addWidget(b)
+
+        # layout.addLayout(btn_layout)
+        parent_layout.addLayout(btn_layout)
 
     # methods
 
@@ -299,3 +307,51 @@ class CharacterApp(QWidget):
             self.image_label.setPixmap(scaled)
         else:
             self.image_label.setText("[No Image]")
+
+    def open_full_image(self):
+        if not self.current_char or not getattr(self.current_char, "image_path", None):
+            return
+
+        image_path = self.current_char.image_path
+        pixmap = QPixmap(image_path)
+
+        if pixmap.isNull():
+            return
+
+        # create popup window
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle(self.current_char.name)
+        dlg.setMinimumSize(self.width(), self.height())  # same size as window UI
+
+        # position relative to parent:
+        parent_pos = self.pos()
+        dlg.move(parent_pos.x() + 50, parent_pos.y() + 50)
+
+        layout = QVBoxLayout(dlg)
+
+        img_label = QLabel()
+        img_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # scale pixmap to dialog size
+        scaled = pixmap.scaled(
+            dlg.size(),
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        img_label.setPixmap(scaled)
+
+        layout.addWidget(img_label)
+
+        # rescale when resizing
+        def resize_event(event):
+            new_scaled = pixmap.scaled(
+                dlg.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            img_label.setPixmap(new_scaled)
+            return QDialog.resizeEvent(dlg, event)
+
+        dlg.resizeEvent = resize_event
+        dlg.exec()

@@ -1,3 +1,5 @@
 /characters.json
 .env
 character_gui.py
+visual.py
+character_store.py
