@@ -40,7 +40,7 @@ class CharacterApp(QWidget):
         # database stores
         stores = get_data_stores()
         self.store = stores.get("character_store")
-        self.items_collection = stores.get("items_collection", None)
+        self.items_collection = stores.get("newItems", None)
         self.cyberware_items = stores.get("cyberware_items", None)
         self.current_char = None
         self.editing = False
@@ -75,18 +75,38 @@ class CharacterApp(QWidget):
         self.tabs.addTab(character_tab, "Characters")
 
         # create the other Collection tab if db connection
-        if self.items_collection is not None:
+        # if self.items_collection is not None:
 
-            self.items_tab = ItemsTab(
-                self.items_collection, columns=["name", "cost", "type"]
-            )
-            self.tabs.addTab(self.items_tab, "Items")
+        #     self.items_tab = ItemsTab(
+        #         self.items_collection, columns=["name", "cost", "type"]
+        #     )
+        #     self.tabs.addTab(self.items_tab, "Items")
 
-            self.cyberware_items = ItemsTab(
-                self.cyberware_items,
-                columns=["name", "cost", "install", "brief_description", "foundation"],
-            )
-            self.tabs.addTab(self.cyberware_items, "G-Cyberware")
+        #     self.cyberware_items = ItemsTab(
+        #         self.cyberware_items,
+        #         columns=["name", "cost", "install", "brief_description", "foundation"],
+        #     )
+        #     self.tabs.addTab(self.cyberware_items, "G-Cyberware")
+        for cname, collection in stores.items():
+            if cname == "character_store":
+                continue
+            if cname == "characters":
+                continue
+
+            sample_doc = collection.find_one()
+            # if sample_doc:
+            #     columns = list(sample_doc.keys())
+            #     columns = [c for c in columns if c != "id"]
+            # else:
+            #     columns = ["name"]
+            if sample_doc:
+                columns = list(sample_doc.keys())
+                columns = [
+                    c for c in columns if "name" in c or "cost" in c or "item" in c
+                ]
+
+            tab = ItemsTab(collection, columns=columns)
+            self.tabs.addTab(tab, cname.capitalize())
 
         self.load_all_characters()
 
