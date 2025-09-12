@@ -19,16 +19,16 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
 # from character_store import CharacterStore
-from visual_character_module import Character
+from .visual_character_module import Character
 
 # from db import character_store as store
-from db import get_data_stores
+from .db import get_data_stores
 
 # from items tab import the items and tab
-from items_tab import ItemsTab
+from .items_tab import ItemsTab
 
 # clickable label:
-from ClickableLabel import ClickableLabel
+from .ClickableLabel import ClickableLabel
 
 
 class CharacterApp(QWidget):
@@ -74,36 +74,25 @@ class CharacterApp(QWidget):
         character_layout.addWidget(scroll)
         self.tabs.addTab(character_tab, "Characters")
 
-        # create the other Collection tab if db connection
-        # if self.items_collection is not None:
-
-        #     self.items_tab = ItemsTab(
-        #         self.items_collection, columns=["name", "cost", "type"]
-        #     )
-        #     self.tabs.addTab(self.items_tab, "Items")
-
-        #     self.cyberware_items = ItemsTab(
-        #         self.cyberware_items,
-        #         columns=["name", "cost", "install", "brief_description", "foundation"],
-        #     )
-        #     self.tabs.addTab(self.cyberware_items, "G-Cyberware")
         for cname, collection in stores.items():
             if cname == "character_store":
                 continue
             if cname == "characters":
                 continue
 
-            sample_doc = collection.find_one()
-            # if sample_doc:
-            #     columns = list(sample_doc.keys())
-            #     columns = [c for c in columns if c != "id"]
-            # else:
-            #     columns = ["name"]
-            if sample_doc:
-                columns = list(sample_doc.keys())
-                columns = [
-                    c for c in columns if "name" in c or "cost" in c or "item" in c
-                ]
+            if not hasattr(collection, "find_one"):
+                continue  # probably JSON fallback or unavailable
+
+            try:
+                sample_doc = collection.find_one()
+            except Exception:
+                continue
+
+            if not sample_doc:
+                continue
+
+            columns = list(sample_doc.keys())
+            columns = [c for c in columns if "name" in c or "cost" in c or "item" in c]
 
             tab = ItemsTab(collection, columns=columns)
             self.tabs.addTab(tab, cname.capitalize())

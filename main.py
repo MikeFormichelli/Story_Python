@@ -1,16 +1,6 @@
 import sys
-from app import app
 from PySide6.QtWidgets import QApplication
-from visual_app import CharacterApp
-
-
-# qt_app = QApplication([])
-
-# while True:
-#     app(qt_app)
-#     user_continue = input("Continue? (y/n)").lower()
-#     if user_continue == "n":
-#         break
+from character_module import CharacterApp
 
 
 def main():

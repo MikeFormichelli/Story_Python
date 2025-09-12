@@ -1,6 +1,7 @@
 import json
 import os
 
+
 class CharacterStore:
     def __init__(self, db=None, fallback_file="characters.json"):
         self.db = db

@@ -2,4 +2,4 @@
 .env
 character_gui.py
 visual.py
-character_store.py
+app.py

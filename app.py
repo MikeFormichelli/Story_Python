@@ -1,13 +1,13 @@
 import pprint
 from character_module import Character
 from visual import ShowWidget
-from db import character_store
+from character_module.db import character_store
 
 
 def app(qt_app):
-    #hold open widgets
+    # hold open widgets
     open_windows = []
-    
+
     Character._ensure_character_file("characters.json")
 
     u_choice = input(
@@ -52,7 +52,9 @@ def app(qt_app):
         try:
             Character.show_characters(store=character_store)
             u_sel_db = input("Select character from database or loc to use local:\n")
-            loaded_character = Character.load_by_name(char_name=u_sel_db, store=character_store)
+            loaded_character = Character.load_by_name(
+                char_name=u_sel_db, store=character_store
+            )
             print(loaded_character.name)
 
             # Show Visual Window

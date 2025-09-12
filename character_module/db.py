@@ -3,7 +3,7 @@ import json
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from pymongo.errors import ServerSelectionTimeoutError
-from character_store import CharacterStore
+from .character_store import CharacterStore
 
 # Default path to local JSON data:
 DEFAULT_JSON_FILE = "characters.json"
