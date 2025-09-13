@@ -35,7 +35,7 @@ class CharacterApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Character Manager")
-        self.setMinimumSize(600, 800)  # avoid fixed height
+        self.setMinimumSize(400, 800)  # avoid fixed height
 
         # database stores
         stores = get_data_stores()
@@ -103,6 +103,7 @@ class CharacterApp(QWidget):
 
         # character list
         self.list_widget = QListWidget()
+        self.list_widget.setMaximumHeight(75)
         self.list_widget.itemClicked.connect(self.load_selected_character)
         parent_layout.addWidget(self.list_widget)
 
@@ -162,7 +163,7 @@ class CharacterApp(QWidget):
             widget = QTextEdit()
             widget.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
             widget.setReadOnly(True)
-            widget.setFixedHeight(60)
+            widget.setMaximumHeight(150)
             self.inputs[field] = widget
             long_form.addRow(field.capitalize(), widget)
 
