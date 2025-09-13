@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from character_module import CharacterApp
-from story_module import MainWindow
+from main_window_module import MainWindow
 
 
 def main():

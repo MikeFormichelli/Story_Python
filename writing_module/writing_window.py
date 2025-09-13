@@ -2,28 +2,19 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QPushButton,
-    QFormLayout,
-    QLineEdit,
     QTextEdit,
-    QListWidget,
-    QMessageBox,
     QHBoxLayout,
-    QLabel,
-    QFileDialog,
-    QScrollArea,
-    QTabWidget,
-    QDialog,
-    QSplitter,
-    QApplication,
     QComboBox,
     QColorDialog,
+    QLabel,
+    QLineEdit,
 )
 
-from PySide6.QtGui import QTextCharFormat, QFont, QColor
+from PySide6.QtGui import QTextCharFormat, QFont
 
 from PySide6.QtCore import Qt
 
-from character_module import CharacterApp
+from .writing_store import WritingStore
 
 
 class WritingModule(QWidget):
@@ -32,6 +23,9 @@ class WritingModule(QWidget):
 
         self.setWindowTitle("Writer")
         self.setMinimumSize(600, 800)
+
+        self.store = WritingStore()
+        self.doc_id = "new_doc"
 
         container = QWidget()
         container_layout = QVBoxLayout(container)
@@ -71,6 +65,13 @@ class WritingModule(QWidget):
 
         container_layout.addLayout(toolbar_layout)
 
+        # title field
+        title_layout = QHBoxLayout()
+        title_layout.addWidget(QLabel("Title:"))
+        self.title_input = QLineEdit()
+        title_layout.addWidget(self.title_input)
+        container_layout.addLayout(title_layout)
+
         # text editor space
         self.textEditSpace = QTextEdit()
         self.textEditSpace.setText("Write here...")
@@ -90,7 +91,9 @@ class WritingModule(QWidget):
     # database methods
 
     def save_text(self):
-        pass
+        html_content = self.textEditSpace.toHtml()
+        title = self.title_input.text().strip()
+        self.store.save_document(self.doc_id, html_content, title)
 
     # formatting methods
 
@@ -127,37 +130,3 @@ class WritingModule(QWidget):
             cursor.select(cursor.SelectionType.WordUnderCursor)
         cursor.mergeCharFormat(format)
         self.textEditSpace.mergeCurrentCharFormat(format)
-
-
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Character Record & Story App")
-        self.setMinimumSize(1280, 815)
-
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-
-        left_window = CharacterApp()
-        splitter.addWidget(left_window)
-
-        # placeholder /right panes
-        # splitter.addWidget(RightPane())
-        central_window = WritingModule()
-        splitter.addWidget(central_window)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(splitter)
-
-        # ---- center on screen ----
-        self.center_on_screen()
-
-    # methods
-    def center_on_screen(self):
-        screen = QApplication.primaryScreen()
-        screen_geometry = screen.availableGeometry()
-        window_geometry = self.frameGeometry()
-
-        # move to center
-        center_point = screen_geometry.center()
-        window_geometry.moveCenter(center_point)
-        self.move(window_geometry.topLeft())
