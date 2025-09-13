@@ -61,7 +61,7 @@ class WritingStore:
             "title": title or self.index.get(doc_id, {}).get("title", ""),
             "last_modified": datetime.now().isoformat(),
         }
-        self.save_index()
+        self._save_index()
 
     def delete_document(self, doc_id):
         """Delete a document and its metadata."""

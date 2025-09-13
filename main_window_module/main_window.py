@@ -25,24 +25,37 @@ from PySide6.QtCore import Qt
 
 from character_module import CharacterApp
 
-from writing_module import WritingModule
+from writing_module import WritingModule, WritingStore
+
+from file_module import FileModule
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Character Record & Story App")
-        self.setMinimumSize(1280, 815)
+        self.setMinimumSize(1530, 815)
+
+        self.store = WritingStore()
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        left_window = CharacterApp()
-        splitter.addWidget(left_window)
+        character_pane = CharacterApp()
+        splitter.addWidget(character_pane)
 
-        # placeholder /right panes
-        # splitter.addWidget(RightPane())
-        central_window = WritingModule()
-        splitter.addWidget(central_window)
+        self.writing_pane = WritingModule(store=self.store)
+        splitter.addWidget(self.writing_pane)
+
+        file_pane = FileModule(
+            store=self.store,
+            on_doc_selected=self.load_document,
+            on_new_doc=self.create_new_document,
+        )
+        splitter.addWidget(file_pane)
+
+        # ✅ Connect the signal from WritingModule to refresh file list
+        self.writing_pane.document_saved.connect(file_pane.refresh_list)
+        file_pane.delete_signal.connect(self.writing_pane.create_new_doc)
 
         layout = QVBoxLayout(self)
         layout.addWidget(splitter)
@@ -60,3 +73,16 @@ class MainWindow(QWidget):
         center_point = screen_geometry.center()
         window_geometry.moveCenter(center_point)
         self.move(window_geometry.topLeft())
+
+    def load_document(self, doc_id):
+        """Called when FileModule selects a document"""
+        store = WritingStore()
+        html = store.get_document(doc_id)
+        meta = store.index.get(doc_id, {})
+        self.writing_pane.doc_id = doc_id
+        self.writing_pane.textEditSpace.setHtml(html or "")
+        self.writing_pane.title_input.setText(meta.get("title", ""))
+
+    def create_new_document(self):
+        """Called when FileModule creates a new doc."""
+        self.writing_pane.create_new_document()

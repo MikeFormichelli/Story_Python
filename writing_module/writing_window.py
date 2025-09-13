@@ -1,3 +1,5 @@
+import uuid
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -12,20 +14,22 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtGui import QTextCharFormat, QFont
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Signal
 
 from .writing_store import WritingStore
 
 
 class WritingModule(QWidget):
-    def __init__(self):
+    document_saved = Signal()
+
+    def __init__(self, store):
         super().__init__()
 
         self.setWindowTitle("Writer")
         self.setMinimumSize(600, 800)
 
-        self.store = WritingStore()
-        self.doc_id = "new_doc"
+        self.store = store
+        self.doc_id = str(uuid.uuid4())
 
         container = QWidget()
         container_layout = QVBoxLayout(container)
@@ -77,11 +81,14 @@ class WritingModule(QWidget):
         self.textEditSpace.setText("Write here...")
         container_layout.addWidget(self.textEditSpace)
 
-        # save/action buttons
+        # action buttons
         self.button_layout = QHBoxLayout()
         self.save_btn = QPushButton("Save")
         self.save_btn.clicked.connect(self.save_text)
         self.button_layout.addWidget(self.save_btn)
+        self.new_doc_btn = QPushButton("New Doc")
+        self.new_doc_btn.clicked.connect(self.create_new_doc)
+        self.button_layout.addWidget(self.new_doc_btn)
         container_layout.addLayout(self.button_layout)
 
         # main layout
@@ -90,10 +97,29 @@ class WritingModule(QWidget):
 
     # database methods
 
+    def create_new_doc(self):
+        """create a new empty document with a fresh UUID"""
+        self.doc_id = str(uuid.uuid4())
+        self.title_input.clear()
+        self.textEditSpace.clear()
+
     def save_text(self):
+        if not self.doc_id:
+            self.create_new_doc()
+
         html_content = self.textEditSpace.toHtml()
         title = self.title_input.text().strip()
         self.store.save_document(self.doc_id, html_content, title)
+        self.document_saved.emit()  # notify that save occurred
+
+    def load_text(self):
+        saved_html = self.store.get_document(self.doc_id)
+        if saved_html:
+            self.textEditSpace.setHtml(saved_html)
+
+        saved_meta = self.store.index.get(self.doc_id, {})
+        if "title" in saved_meta:
+            self.title_input.setText(saved_meta["title"])
 
     # formatting methods
 
