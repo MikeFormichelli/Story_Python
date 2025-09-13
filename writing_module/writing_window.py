@@ -12,11 +12,40 @@ from PySide6.QtWidgets import (
     QLineEdit,
 )
 
-from PySide6.QtGui import QTextCharFormat, QFont
+from PySide6.QtGui import QTextCharFormat, QFont, QTextListFormat, QTextCursor
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
 
 from .writing_store import WritingStore
+
+
+class IndentedTextEdit(QTextEdit):
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            cursor = self.textCursor()
+
+            # Get current line text
+            cursor.select(QTextCursor.SelectionType.LineUnderCursor)
+            line_text = cursor.selectedText()
+
+            # Count leading spaces/tabs for previous line
+            leading_whitespace = ""
+            for ch in line_text:
+                if ch in (" ", "\t"):
+                    leading_whitespace += ch
+                else:
+                    break
+
+            # If line has no leading whitespace, use default indent
+            indent = leading_whitespace or "    "
+
+            # Let QTextEdit handle the newline first
+            super().keyPressEvent(event)
+
+            # Insert the indent
+            self.insertPlainText(indent)
+        else:
+            super().keyPressEvent(event)
 
 
 class WritingModule(QWidget):
@@ -67,6 +96,31 @@ class WritingModule(QWidget):
         self.color_btn.clicked.connect(self.set_text_color)
         toolbar_layout.addWidget(self.color_btn)
 
+        # Alignment buttons
+
+        left_btn = QPushButton("Left")
+        left_btn.clicked.connect(
+            lambda: self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        )
+        toolbar_layout.addWidget(left_btn)
+
+        center_btn = QPushButton("Center")
+        center_btn.clicked.connect(
+            lambda: self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        )
+        toolbar_layout.addWidget(center_btn)
+
+        justify_btn = QPushButton("Justify")
+        justify_btn.clicked.connect(
+            lambda: self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignJustify)
+        )
+        toolbar_layout.addWidget(justify_btn)
+
+        # bullet list button
+        bullet_btn = QPushButton("• Bullet")
+        bullet_btn.clicked.connect(self.insert_bullet_list)
+        toolbar_layout.addWidget(bullet_btn)
+
         container_layout.addLayout(toolbar_layout)
 
         # title field
@@ -77,8 +131,9 @@ class WritingModule(QWidget):
         container_layout.addLayout(title_layout)
 
         # text editor space
-        self.textEditSpace = QTextEdit()
+        self.textEditSpace = IndentedTextEdit()
         self.textEditSpace.setText("Write here...")
+        self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Default
         container_layout.addWidget(self.textEditSpace)
 
         # action buttons
@@ -95,7 +150,7 @@ class WritingModule(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(container)
 
-    # database methods
+    # document handling methods
 
     def create_new_doc(self):
         """create a new empty document with a fresh UUID"""
@@ -149,6 +204,10 @@ class WritingModule(QWidget):
             fmt = QTextCharFormat()
             fmt.setForeground(color)
             self.merge_format_on_selection(fmt)
+
+    def insert_bullet_list(self):
+        cursor = self.textEditSpace.textCursor()
+        cursor.insertList(QTextListFormat.Style.ListDisc)
 
     def merge_format_on_selection(self, format):
         cursor = self.textEditSpace.textCursor()
