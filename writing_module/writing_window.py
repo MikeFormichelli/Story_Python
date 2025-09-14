@@ -26,9 +26,22 @@ from .writing_store import WritingStore
 
 
 class IndentedTextEdit(QTextEdit):
+    def __init__(self, font_selector=None, font_size_combo=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.font_selector = font_selector
+        self.font_size_combo = font_size_combo
+
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             cursor = self.textCursor()
+
+            # Determine whterh the current (previous) block is a heading
+            try:
+                prev_block = cursor.block()
+                prev_block_fmt = prev_block.blockFormat()
+                prev_heading = prev_block_fmt.headingLeve()  # int, 0 if not a heading
+            except Exception:
+                prev_heading = 0
 
             # Get current line text
             cursor.select(QTextCursor.SelectionType.LineUnderCursor)
@@ -50,6 +63,16 @@ class IndentedTextEdit(QTextEdit):
 
             # Insert the indent
             self.insertPlainText(indent)
+
+            # Reapply current font selection (family & size)
+            if self.font_selector and self.font_size_combo:
+                print(self.font_selector, self.font_size_combo)
+                fmt = QTextCharFormat()
+                fmt.setFontFamily(self.font_selector.currentText())
+                fmt.setFontPointSize(float(self.font_size_combo.currentText()))
+                cursor = self.textCursor()
+                cursor.mergeCharFormat(fmt)
+                print("merge ran")
         else:
             super().keyPressEvent(event)
 
@@ -175,7 +198,9 @@ class WritingModule(QWidget):
         text_editor_container.addLayout(font_mod_container)
 
         # text editor space
-        self.textEditSpace = IndentedTextEdit()
+        self.textEditSpace = IndentedTextEdit(
+            font_selector=self.font_selector, font_size_combo=self.font_size_combo
+        )
         self.textEditSpace.setText("Write here...")
         self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Default
         text_editor_container.addWidget(self.textEditSpace)
@@ -261,33 +286,67 @@ class WritingModule(QWidget):
 
         cursor = self.textEditSpace.textCursor()
 
-        # set heading level on the block
+        # 1) set heading level on the block
         block_fmt = cursor.blockFormat()
-        block_fmt.setHeadingLevel(level)
+        try:
+            block_fmt.setHeadingLevel(level)
+        except Exception:
+            pass
+
         cursor.setBlockFormat(block_fmt)
 
-        # 2 set font size as a character format
+        # 2 set font size & family as a character format
         char_fmt = QTextCharFormat()
+        char_fmt.setFontFamily("Lexend")  # font setting here done on charFormat
 
         match level:
             case 1:
                 char_fmt.setFontPointSize(24)
+                char_fmt.setFontWeight(QFont.Weight.Bold)
             case 2:
                 char_fmt.setFontPointSize(20)
+                char_fmt.setFontWeight(QFont.Weight.Bold)
             case 3:
                 char_fmt.setFontPointSize(18)
+                char_fmt.setFontWeight(QFont.Weight.Bold)
             case 4:
                 char_fmt.setFontPointSize(16)
             case 5:
                 char_fmt.setFontPointSize(14)
             case 6:
                 char_fmt.setFontPointSize(12)
+
+        # apply to current block
         cursor.select(QTextCursor.SelectionType.BlockUnderCursor)
         cursor.mergeCharFormat(char_fmt)
 
+        # # 3) Reset *future* text to normal after heading
+        # normal_fmt = QTextCharFormat()
+        # normal_fmt.setFontFamily(self.font_selector.currentText())
+        # normal_fmt.setFontPointSize(float(self.font_size_combo.currentText()))
+        # self.textEditSpace.mergeCurrentCharFormat(normal_fmt)
+
+        # set current typing format to the heading *so typing in this block remains heading*
+        self.textEditSpace.mergeCurrentCharFormat(char_fmt)
+
+        # 4) Restore focus to editor
+        self.textEditSpace.setFocus()
+
     def set_editor_font(self, font_name):
         font = QFont(font_name, int(self.font_size_combo.currentText()))
-        self.textEditSpace.setFont(font)
+        # self.textEditSpace.setFont(font)
+        cursor = self.textEditSpace.textCursor()
+        fmt = QTextCharFormat()
+        fmt.setFontFamily(
+            font.family()
+        )  # passing just the font family name from font object
+        # maintain font size:
+        fmt.setFontPointSize(float(self.font_size_combo.currentText()))
+
+        if cursor.hasSelection():
+            cursor.mergeCharFormat(fmt)
+        else:
+            self.textEditSpace.mergeCurrentCharFormat(fmt)
 
     def merge_format_on_selection(self, format):
         cursor = self.textEditSpace.textCursor()
