@@ -4,12 +4,12 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QPushButton,
-    QTextEdit,
     QHBoxLayout,
     QComboBox,
     QColorDialog,
     QLabel,
     QLineEdit,
+    QFileDialog,
 )
 
 from PySide6.QtGui import (
@@ -22,64 +22,9 @@ from PySide6.QtGui import (
 
 from PySide6.QtCore import Signal, Qt
 
+from .indented_textEditor import IndentedTextEdit
 
-class IndentedTextEdit(QTextEdit):
-    def __init__(self, font_selector=None, font_size_combo=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.font_selector = font_selector
-        self.font_size_combo = font_size_combo
-
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-            cursor = self.textCursor()
-
-            # Determine whterh the current (previous) block is a heading
-            try:
-                prev_block = cursor.block()
-                prev_block_fmt = prev_block.blockFormat()
-                prev_heading = prev_block_fmt.headingLeve()  # int, 0 if not a heading
-            except Exception:
-                prev_heading = 0
-
-            # Get current line text
-            cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-            line_text = cursor.selectedText()
-
-            # Count leading spaces/tabs for previous line
-            leading_whitespace = ""
-            for ch in line_text:
-                if ch in (" ", "\t"):
-                    leading_whitespace += ch
-                else:
-                    break
-
-            # If line has no leading whitespace, use default indent
-            indent = leading_whitespace or "    "
-
-            # Let QTextEdit handle the newline first
-            super().keyPressEvent(event)
-
-            if self.font_selector and self.font_size_combo:
-
-                if hasattr(self.parent(), "set_editor_font"):
-                    self.parent().set_editor_font()  # make sure parent has this method
-                else:
-                    normal_fmt = QTextCharFormat()
-                    normal_fmt.setFontFamily(self.font_selector.currentText())
-                    normal_fmt.setFontPointSize(
-                        float(self.font_size_combo.currentText())
-                    )
-                    normal_fmt.setFontWeight(QFont.Weight.Normal)
-                    self.mergeCurrentCharFormat(normal_fmt)
-                    self.setCurrentFont(
-                        QFont(self.font_selector.currentText())
-                    )  # <-- key bit!
-
-                    # Insert the indent
-                    self.insertPlainText(indent)
-
-        else:
-            super().keyPressEvent(event)
+# alternate layout manager
 
 
 class WritingModule(QWidget):
@@ -89,7 +34,7 @@ class WritingModule(QWidget):
         super().__init__()
 
         self.setWindowTitle("Writer")
-        self.setMinimumSize(600, 800)
+        self.setMinimumSize(600, 750)
 
         self.store = store
         self.doc_id = str(uuid.uuid4())
@@ -140,6 +85,17 @@ class WritingModule(QWidget):
             lambda: self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignJustify)
         )
         toolbar_layout.addWidget(justify_btn)
+
+        # images
+        img_btn = QPushButton("⬅️📷")  # emoji icon
+        img_btn.setToolTip("Insert Image Left Side")
+        img_btn.clicked.connect(lambda: self.open_image_dialog("left"))
+        toolbar_layout.addWidget(img_btn)
+
+        r_img_btn = QPushButton("📷➡️")  # emoji icon
+        r_img_btn.setToolTip("Insert Image Right Side")
+        r_img_btn.clicked.connect(lambda: self.open_image_dialog("right"))
+        toolbar_layout.addWidget(r_img_btn)
 
         container_layout.addLayout(toolbar_layout)
 
@@ -373,3 +329,12 @@ class WritingModule(QWidget):
             cursor.select(cursor.SelectionType.WordUnderCursor)
         cursor.mergeCharFormat(format)
         self.textEditSpace.mergeCurrentCharFormat(format)
+
+    # image handling
+
+    def open_image_dialog(self, left_or_right):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select Image", "", "Images (*.png *.jpg *.jpeg *.bmp)"
+        )
+        if file_path:
+            self.textEditSpace.insert_image(file_path, align=left_or_right)

@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt, QTimer
 
 from character_module import CharacterApp
 
-from writing_module import WritingModule, WritingStore
+from writing_module import WritingModule, WritingStore, WritingLayout
 
 from file_module import FileModule
 
@@ -29,7 +29,7 @@ class MainWindow(QWidget):
         character_pane = CharacterApp()
         splitter.addWidget(character_pane)
 
-        self.writing_pane = WritingModule(store=self.store)
+        self.writing_pane = WritingLayout(store=self.store)
         splitter.addWidget(self.writing_pane)
 
         file_pane = FileModule(
@@ -40,8 +40,8 @@ class MainWindow(QWidget):
         splitter.addWidget(file_pane)
 
         # ✅ Connect the signal from WritingModule to refresh file list
-        self.writing_pane.document_saved.connect(file_pane.refresh_list)
-        file_pane.delete_signal.connect(self.writing_pane.create_new_doc)
+        self.writing_pane.writing_tab.document_saved.connect(file_pane.refresh_list)
+        file_pane.delete_signal.connect(self.writing_pane.writing_tab.create_new_doc)
 
         layout = QVBoxLayout(self)
         layout.addWidget(splitter)
@@ -65,13 +65,13 @@ class MainWindow(QWidget):
         store = WritingStore()
         html = store.get_document(doc_id)
         meta = store.index.get(doc_id, {})
-        self.writing_pane.doc_id = doc_id
-        self.writing_pane.textEditSpace.setHtml(html or "")
-        self.writing_pane.title_input.setText(meta.get("title", ""))
-        self.writing_pane.load_font_and_size(
+        self.writing_pane.writing_tab.doc_id = doc_id
+        self.writing_pane.writing_tab.textEditSpace.setHtml(html or "")
+        self.writing_pane.writing_tab.title_input.setText(meta.get("title", ""))
+        self.writing_pane.writing_tab.load_font_and_size(
             meta.get("font", "Garamond"), meta.get("font_size", "12")
         )
 
     def create_new_document(self):
         """Called when FileModule creates a new doc."""
-        self.writing_pane.create_new_document()
+        self.writing_pane.writing_tab.create_new_document()

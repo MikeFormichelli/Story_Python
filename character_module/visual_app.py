@@ -54,7 +54,6 @@ class CharacterApp(QWidget):
         scroll.setWidget(scroll_content)
 
         # Layout for scroll content
-        # self.form_layout = QVBoxLayout(scroll_content)
         main_layout = QVBoxLayout(scroll_content)
 
         # Create UI inside scroll_content
@@ -64,7 +63,6 @@ class CharacterApp(QWidget):
         main_layout = QVBoxLayout(self)
 
         self.tabs = QTabWidget()
-        # main_layout.addWidget(scroll)
         main_layout.addWidget(self.tabs)
 
         # create character tab
@@ -156,16 +154,24 @@ class CharacterApp(QWidget):
             "minor_skills",
             "cyberware",
             "relationships",
-            "background",
+            # "background",
         ]
 
         for field in multiline_fields:
             widget = QTextEdit()
             widget.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
             widget.setReadOnly(True)
-            widget.setMaximumHeight(150)
+            widget.setMaximumHeight(200)
             self.inputs[field] = widget
             long_form.addRow(field.capitalize(), widget)
+
+        # background field
+        background_widget = QTextEdit()
+        background_widget.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+        background_widget.setReadOnly(True)
+        background_widget.setMinimumHeight(250)
+        self.inputs["background"] = background_widget
+        long_form.addRow("Background", background_widget)
 
         parent_layout.addLayout(long_form)
 
@@ -195,13 +201,18 @@ class CharacterApp(QWidget):
     def load_all_characters(self):
         Character.sync_bi_directional(store=self.store)
         self.list_widget.clear()
-        for char in self.store.find():
+        character_list = list(self.store.find())
+        self.sorted_characters = sorted(character_list, key=lambda x: x["name"])
+        for char in self.sorted_characters:
             self.list_widget.addItem(f"{char.get('name')} ({char.get('handle')})")
 
     def get_selected_character_data(self):
         index = self.list_widget.currentRow()
-        all_chars = list(self.store.find())
-        return all_chars[index] if 0 <= index < len(all_chars) else None
+        return (
+            self.sorted_characters[index]
+            if 0 <= index < len(self.sorted_characters)
+            else None
+        )
 
     def load_selected_character(self):
         data = self.get_selected_character_data()
