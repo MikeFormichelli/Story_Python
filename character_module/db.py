@@ -6,7 +6,7 @@ from pymongo.errors import ServerSelectionTimeoutError
 from .character_store import CharacterStore
 
 # Default path to local JSON data:
-DEFAULT_JSON_FILE = "characters.json"
+DEFAULT_JSON_FILE = "data/characters.json"
 
 # globals:
 client = None
@@ -47,13 +47,13 @@ def connect_to_db():
         return None
 
 
-def load_characters_fallback():
-    if os.path.exists(DEFAULT_JSON_FILE):
-        with open(DEFAULT_JSON_FILE, "r") as f:
-            return json.load(f)
-    else:
-        print("❌ No JSON file found.")
-        return {}
+# def load_characters_fallback():
+#     if os.path.exists(DEFAULT_JSON_FILE):
+#         with open(DEFAULT_JSON_FILE, "r") as f:
+#             return json.load(f)
+#     else:
+#         print("❌ No JSON file found.")
+#         return {}
 
 
 # Init once at import
@@ -77,7 +77,7 @@ def get_data_stores():
 
         return col_dict
     else:
-        fallback_data = load_characters_fallback()
+        # fallback_data = load_characters_fallback()
         return {
             "character_store": CharacterStore(),
             "items_collection": None,

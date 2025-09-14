@@ -48,7 +48,9 @@ class WritingStore:
                 return f.read()
         return ""
 
-    def save_document(self, doc_id, html_content, title=None):
+    def save_document(
+        self, doc_id, html_content, title=None, font=None, font_size=None
+    ):
         """Save HTML content to its own file and update index."""
         file_name = f"{doc_id}.html"
         file_path = os.path.join(self.html_dir, file_name)
@@ -58,6 +60,8 @@ class WritingStore:
 
         self.index[doc_id] = {
             "filename": file_name,
+            "font": font,
+            "font_size": font_size,
             "title": title or self.index.get(doc_id, {}).get("title", ""),
             "last_modified": datetime.now().isoformat(),
         }

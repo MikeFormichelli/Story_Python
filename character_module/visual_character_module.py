@@ -58,7 +58,7 @@ class Character:
         self.store.delete_one({"_id": self._id})
 
     @staticmethod
-    def sync_bi_directional(store, file="characters.json"):
+    def sync_bi_directional(store, file="data/characters.json"):
         # load JSON
         try:
 

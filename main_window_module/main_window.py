@@ -1,27 +1,13 @@
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QPushButton,
-    QFormLayout,
-    QLineEdit,
-    QTextEdit,
-    QListWidget,
-    QMessageBox,
-    QHBoxLayout,
-    QLabel,
-    QFileDialog,
-    QScrollArea,
-    QTabWidget,
-    QDialog,
     QSplitter,
     QApplication,
-    QComboBox,
-    QColorDialog,
 )
 
 from PySide6.QtGui import QTextCharFormat, QFont, QColor
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 
 from character_module import CharacterApp
 
@@ -82,6 +68,9 @@ class MainWindow(QWidget):
         self.writing_pane.doc_id = doc_id
         self.writing_pane.textEditSpace.setHtml(html or "")
         self.writing_pane.title_input.setText(meta.get("title", ""))
+        self.writing_pane.load_font_and_size(
+            meta.get("font", "Garamond"), meta.get("font_size", "12")
+        )
 
     def create_new_document(self):
         """Called when FileModule creates a new doc."""

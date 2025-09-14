@@ -22,8 +22,6 @@ from PySide6.QtGui import (
 
 from PySide6.QtCore import Signal, Qt
 
-from .writing_store import WritingStore
-
 
 class IndentedTextEdit(QTextEdit):
     def __init__(self, font_selector=None, font_size_combo=None, *args, **kwargs):
@@ -61,18 +59,25 @@ class IndentedTextEdit(QTextEdit):
             # Let QTextEdit handle the newline first
             super().keyPressEvent(event)
 
-            # Insert the indent
-            self.insertPlainText(indent)
-
-            # Reapply current font selection (family & size)
             if self.font_selector and self.font_size_combo:
-                print(self.font_selector, self.font_size_combo)
-                fmt = QTextCharFormat()
-                fmt.setFontFamily(self.font_selector.currentText())
-                fmt.setFontPointSize(float(self.font_size_combo.currentText()))
-                cursor = self.textCursor()
-                cursor.mergeCharFormat(fmt)
-                print("merge ran")
+
+                if hasattr(self.parent(), "set_editor_font"):
+                    self.parent().set_editor_font()  # make sure parent has this method
+                else:
+                    normal_fmt = QTextCharFormat()
+                    normal_fmt.setFontFamily(self.font_selector.currentText())
+                    normal_fmt.setFontPointSize(
+                        float(self.font_size_combo.currentText())
+                    )
+                    normal_fmt.setFontWeight(QFont.Weight.Normal)
+                    self.mergeCurrentCharFormat(normal_fmt)
+                    self.setCurrentFont(
+                        QFont(self.font_selector.currentText())
+                    )  # <-- key bit!
+
+                    # Insert the indent
+                    self.insertPlainText(indent)
+
         else:
             super().keyPressEvent(event)
 
@@ -209,12 +214,20 @@ class WritingModule(QWidget):
 
         # action buttons
         self.button_layout = QHBoxLayout()
+
+        # save button
         self.save_btn = QPushButton("Save")
         self.save_btn.clicked.connect(self.save_text)
         self.button_layout.addWidget(self.save_btn)
+        # new document button
         self.new_doc_btn = QPushButton("New Doc")
         self.new_doc_btn.clicked.connect(self.create_new_doc)
         self.button_layout.addWidget(self.new_doc_btn)
+        # clear text button
+        self.clear_text_btn = QPushButton("Clear")
+        self.clear_text_btn.clicked.connect(lambda: self.textEditSpace.clear())
+        self.button_layout.addWidget(self.clear_text_btn)
+
         container_layout.addLayout(self.button_layout)
 
         # main layout
@@ -235,17 +248,23 @@ class WritingModule(QWidget):
 
         html_content = self.textEditSpace.toHtml()
         title = self.title_input.text().strip()
-        self.store.save_document(self.doc_id, html_content, title)
+        font = self.font_selector.currentText()
+        font_size = float(self.font_size_combo.currentText())
+        self.store.save_document(self.doc_id, html_content, title, font, font_size)
         self.document_saved.emit()  # notify that save occurred
 
-    def load_text(self):
-        saved_html = self.store.get_document(self.doc_id)
-        if saved_html:
-            self.textEditSpace.setHtml(saved_html)
+    def load_font_and_size(self, font, font_size):
+        if font:
+            self.font_selector.setCurrentText(font)
+        if font_size:
+            self.font_size_combo.setCurrentText(str(int(font_size)))
 
-        saved_meta = self.store.index.get(self.doc_id, {})
-        if "title" in saved_meta:
-            self.title_input.setText(saved_meta["title"])
+        # update editor formatting explicitly
+        fmt = QTextCharFormat()
+        fmt.setFontFamily(font or self.font_selector.currentText())
+        fmt.setFontPointSize(float(font_size or self.font_size_combo.currentText()))
+        self.textEditSpace.mergeCurrentCharFormat(fmt)
+        self.textEditSpace.setCurrentFont(QFont(fmt.fontFamily(), fmt.fontPointSize()))
 
     # formatting methods
 
@@ -264,7 +283,7 @@ class WritingModule(QWidget):
         fmt.setFontUnderline(checked)
         self.merge_format_on_selection(fmt)
 
-    def set_font_size(self, size):
+    def set_font_size(self, size: float):
         fmt = QTextCharFormat()
         fmt.setFontPointSize(float(size))
         self.merge_format_on_selection(fmt)

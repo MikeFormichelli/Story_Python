@@ -3,18 +3,20 @@ import os
 
 
 class CharacterStore:
-    def __init__(self, db=None, fallback_file="characters.json"):
+    def __init__(self, db=None, fallback_file="data/characters.json"):
         self.db = db
         self.use_db = db is not None
         self.fallback_file = fallback_file
 
         if not self.use_db:
             self._ensure_file()
+            print("Opening JSON...")
             with open(self.fallback_file, "r") as f:
                 self.data = json.load(f)
 
     def _ensure_file(self):
         if not os.path.exists(self.fallback_file):
+            print("❌ No JSON file found. Creating...")
             with open(self.fallback_file, "w") as f:
                 json.dump({}, f, indent=4)
 
