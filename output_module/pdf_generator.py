@@ -3,7 +3,13 @@ from weasyprint import HTML, CSS
 from jinja2 import Environment, FileSystemLoader
 from bs4 import BeautifulSoup
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QSizePolicy
+from PySide6.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QSizePolicy,
+)
 from PySide6.QtCore import QUrl
 
 
@@ -35,7 +41,9 @@ class PDFGenerator:
             stylesheets.append(CSS(string=extra_styles))  # overrides last
 
         # preview
-        self.preview_html(fixed_html=fixed_html)
+        if not self.preview_html(fixed_html=fixed_html):
+            print("user rejected preview")
+            return  # exit early
 
         # generate PDF:
         HTML(string=fixed_html).write_pdf(str(output_file), stylesheets=stylesheets)
@@ -92,14 +100,21 @@ class PDFGenerator:
         webview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(webview)
 
-        # close button
-        close_btn = QPushButton("CLose", dlg)
-        close_btn.clicked.connect(dlg.accept)
-        layout.addWidget(close_btn)
+        # buttons
+        btn_row = QHBoxLayout()
+        accept_btn = QPushButton("Accept", dlg)
+        reject_btn = QPushButton("Reject", dlg)
+        btn_row.addWidget(accept_btn)
+        btn_row.addWidget(reject_btn)
+        # connect buttons
+        accept_btn.clicked.connect(lambda: dlg.done(QDialog.Accepted))
+        reject_btn.clicked.connect(lambda: dlg.done(QDialog.Rejected))
+        layout.addLayout(btn_row)
 
         dlg.setLayout(layout)
 
-        dlg.exec()
+        result = dlg.exec()
+        return result == QDialog.Accepted
 
     def soup_parser(self, html_string: str, extra_styles: str | None = None) -> dict:
         """Process HTML: fix image paths, add classes, and prepare head for CSS."""
