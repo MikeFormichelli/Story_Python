@@ -25,6 +25,7 @@ from PySide6.QtCore import Signal, Qt
 from .indented_textEditor import IndentedTextEdit
 
 # alternate layout manager
+# WeasyPrint ? for html to pdf
 
 
 class WritingModule(QWidget):
@@ -294,12 +295,6 @@ class WritingModule(QWidget):
         # apply to current block
         cursor.select(QTextCursor.SelectionType.BlockUnderCursor)
         cursor.mergeCharFormat(char_fmt)
-
-        # # 3) Reset *future* text to normal after heading
-        # normal_fmt = QTextCharFormat()
-        # normal_fmt.setFontFamily(self.font_selector.currentText())
-        # normal_fmt.setFontPointSize(float(self.font_size_combo.currentText()))
-        # self.textEditSpace.mergeCurrentCharFormat(normal_fmt)
 
         # set current typing format to the heading *so typing in this block remains heading*
         self.textEditSpace.mergeCurrentCharFormat(char_fmt)

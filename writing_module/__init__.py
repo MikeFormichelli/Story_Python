@@ -2,5 +2,12 @@ from .writing_window import WritingModule
 from .writing_store import WritingStore
 from .indented_textEditor import IndentedTextEdit
 from .writing_module_layout import WritingLayout
+from .row_editor import RowBasedHtmlEditor
 
-__all__ = ["WritingModule", "WritingStore", "IndentedTextEdit", "WritingLayout"]
+__all__ = [
+    "WritingModule",
+    "WritingStore",
+    "IndentedTextEdit",
+    "WritingLayout",
+    "RowBasedHtmlEditor",
+]
