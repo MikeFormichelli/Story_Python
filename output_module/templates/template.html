@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Character Record: {{handle}}/{{name}}</title>
+  </head>
+  <body>
+    <div>
+      <h1>{{handle}}</h1>
+    </div>
+    <div class="character-header">
+      <div class="portrait-container">
+        <img src="{{image_path}}" class="character-portrait" />
+      </div>
+      <div class="character-details">
+        <p><strong>Name:</strong> {{name}}</p>
+        <p><strong>Sex:</strong> {{sex}}</p>
+        <p><strong>Age:</strong> {{age}}</p>
+        <p><strong>Role:</strong> {{role}}</p>
+        <p><strong>Experience:</strong> {{experience_level}}</p>
+      </div>
+    </div>
+
+    <div>
+      <h2>Description:</h2>
+      <p>{{description}}</p>
+    </div>
+
+    <div>
+      <h2>Skills:</h2>
+      <h3>Major:</h3>
+      <p>{{major_skills | join(', ')}}</p>
+      <h3>Minor:</h3>
+      <p>{{minor_skills | join(', ')}}</p>
+    </div>
+
+    <div>
+      <h2>Cyberware</h2>
+      <table>
+        <tbody>
+          {% for cyb_row in cyberware %}
+          <tr>
+            {%for cbw in cyb_row %}
+            <td>{{cbw}}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <h2>Relationships:</h2>
+      {{relationships|join(',')}}
+    </div>
+
+    <div>
+      <h2>Background:</h2>
+      {{background}}
+    </div>
+  </body>
+  <footer>Last Updated: {{last_updated}}</footer>
+</html>

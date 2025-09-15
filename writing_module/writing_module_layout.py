@@ -4,7 +4,7 @@ from .row_editor import RowBasedHtmlEditor
 
 
 class WritingLayout(QWidget):
-    def __init__(self, store):
+    def __init__(self, store, pdf_generator):
         super().__init__()
 
         self.setWindowTitle("Writer Layout")
@@ -17,7 +17,7 @@ class WritingLayout(QWidget):
         main_layout.addWidget(self.tabs)
 
         # add writing tab
-        self.writing_tab = WritingModule(store=self.store)
+        self.writing_tab = WritingModule(store=self.store, pdf_generator=pdf_generator)
         # writing_sub_layout = QVBoxLayout(writing_tab)
         self.tabs.addTab(self.writing_tab, "Writer")
 

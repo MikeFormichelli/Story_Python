@@ -112,3 +112,6 @@ class Character:
         # write merged data back to JSON file
         with open(file, "w") as f:
             json.dump(merged_data, f, indent=4)
+
+    def to_dict(self):
+        return {k: v for k, v in self.__dict__.items() if k not in ("store", "_id")}

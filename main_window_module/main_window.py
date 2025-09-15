@@ -15,6 +15,8 @@ from writing_module import WritingModule, WritingStore, WritingLayout
 
 from file_module import FileModule
 
+from output_module import PDFGenerator
+
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -24,12 +26,16 @@ class MainWindow(QWidget):
 
         self.store = WritingStore()
 
+        self.pdf_generator = PDFGenerator()
+
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        character_pane = CharacterApp()
+        character_pane = CharacterApp(pdf_generator=self.pdf_generator)
         splitter.addWidget(character_pane)
 
-        self.writing_pane = WritingLayout(store=self.store)
+        self.writing_pane = WritingLayout(
+            store=self.store, pdf_generator=self.pdf_generator
+        )
         splitter.addWidget(self.writing_pane)
 
         file_pane = FileModule(

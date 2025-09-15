@@ -32,7 +32,7 @@ from .ClickableLabel import ClickableLabel
 
 
 class CharacterApp(QWidget):
-    def __init__(self):
+    def __init__(self, pdf_generator):
         super().__init__()
         self.setWindowTitle("Character Manager")
         self.setMinimumSize(400, 800)  # avoid fixed height
@@ -44,6 +44,9 @@ class CharacterApp(QWidget):
         self.cyberware_items = stores.get("cyberware_items", None)
         self.current_char = None
         self.editing = False
+
+        # pdf gen
+        self.pdf_generator = pdf_generator
 
         # Scroll area
         scroll = QScrollArea()
@@ -190,7 +193,16 @@ class CharacterApp(QWidget):
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_character)
 
-        for b in (self.new_btn, self.edit_btn, self.save_btn, self.delete_btn):
+        self.print_btn = QPushButton("PDF")
+        self.print_btn.clicked.connect(self.print_to_pdf)
+
+        for b in (
+            self.new_btn,
+            self.edit_btn,
+            self.save_btn,
+            self.delete_btn,
+            self.print_btn,
+        ):
             btn_layout.addWidget(b)
 
         # layout.addLayout(btn_layout)
@@ -376,3 +388,6 @@ class CharacterApp(QWidget):
 
         dlg.resizeEvent = resize_event
         dlg.exec()
+
+    def print_to_pdf(self):
+        self.pdf_generator.generate_character_sheet(self.current_char.to_dict())

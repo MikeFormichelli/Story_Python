@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -25,13 +26,12 @@ from PySide6.QtCore import Signal, Qt
 from .indented_textEditor import IndentedTextEdit
 
 # alternate layout manager
-# WeasyPrint ? for html to pdf
 
 
 class WritingModule(QWidget):
     document_saved = Signal()
 
-    def __init__(self, store):
+    def __init__(self, store, pdf_generator):
         super().__init__()
 
         self.setWindowTitle("Writer")
@@ -39,6 +39,8 @@ class WritingModule(QWidget):
 
         self.store = store
         self.doc_id = str(uuid.uuid4())
+
+        self.pdf_generator = pdf_generator
 
         container = QWidget()
         container_layout = QVBoxLayout(container)
@@ -184,6 +186,10 @@ class WritingModule(QWidget):
         self.clear_text_btn = QPushButton("Clear")
         self.clear_text_btn.clicked.connect(lambda: self.textEditSpace.clear())
         self.button_layout.addWidget(self.clear_text_btn)
+        # print button
+        self.print_to_pdf_btn = QPushButton("PDF")
+        self.print_to_pdf_btn.clicked.connect(self.print_to_pdf)
+        self.button_layout.addWidget(self.print_to_pdf_btn)
 
         container_layout.addLayout(self.button_layout)
 
@@ -333,3 +339,24 @@ class WritingModule(QWidget):
         )
         if file_path:
             self.textEditSpace.insert_image(file_path, align=left_or_right)
+
+    # produce PDF
+    def print_to_pdf(self):
+        extra_styles = """
+            h1 {
+                text-align:center; 
+                }
+            h2 {
+                text-align: left;
+                margin-left: 0.5rem;
+            }
+            h3 {
+                text-align: left;
+                margin-left: 0.5rem;
+            }
+        """
+        docs_info = self.store.index
+        doc_info = docs_info[self.doc_id]
+        self.pdf_generator.run_generator(
+            doc_info["filename"], doc_info["title"], extra_styles=extra_styles
+        )
