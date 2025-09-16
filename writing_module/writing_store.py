@@ -9,9 +9,16 @@ class WritingStore:
     Can be swapped later for MongoDB or SQLite by reimplementing methods.
     """
 
-    def __init__(self, base_dir=None, html_subdir="html", index_file="index.json"):
+    def __init__(
+        self, base_dir=None, html_subdir="html", index_file="index.json", logger=None
+    ):
+
+        # set logger
+        logger = logger
 
         if base_dir is None:
+            logger.debug("base_dir is None. Setting current_dir and base_dir.")
+
             current_dir = os.path.dirname(os.path.abspath(__file__))
             base_dir = os.path.join(current_dir, "..", "data")
 
@@ -23,7 +30,11 @@ class WritingStore:
         # ensure directories exist
         os.makedirs(self.html_dir, exist_ok=True)
 
+        logger.debug("Directories ensured.")
+
         self.load_index()
+
+        logger.debug("Index loaded")
 
     def load_index(self):
         if os.path.exists(self.index_file):

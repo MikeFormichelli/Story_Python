@@ -2,9 +2,15 @@ import sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont
 from main_window_module import MainWindow
+from logging_module import logging_setup
+
+# set logger
+logger = logging_setup()
 
 
 def main():
+    logger.info("\n\nStarting app")
+
     app = QApplication(sys.argv)
 
     # set default app font
@@ -13,7 +19,7 @@ def main():
 
     # --show main window --
 
-    window = MainWindow()
+    window = MainWindow(logger=logger)
     window.setStyleSheet("background-color: #191D21")
     window.show()
 

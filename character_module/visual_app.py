@@ -32,13 +32,16 @@ from .ClickableLabel import ClickableLabel
 
 
 class CharacterApp(QWidget):
-    def __init__(self, pdf_generator):
+    def __init__(self, pdf_generator, logger):
         super().__init__()
         self.setWindowTitle("Character Manager")
         self.setMinimumSize(400, 800)  # avoid fixed height
 
+        self.logger = logger
+
         # database stores
         stores = get_data_stores()
+        self.logger.debug("stores loaded.")
         self.store = stores.get("character_store")
         self.items_collection = stores.get("newItems", None)
         self.cyberware_items = stores.get("cyberware_items", None)
@@ -47,6 +50,7 @@ class CharacterApp(QWidget):
 
         # pdf gen
         self.pdf_generator = pdf_generator
+        self.logger.debug("PDF Generator loaded")
 
         # Scroll area
         scroll = QScrollArea()
@@ -99,9 +103,10 @@ class CharacterApp(QWidget):
             self.tabs.addTab(tab, cname.capitalize())
 
         self.load_all_characters()
+        self.logger.debug("All Characters loaded.")
 
     def init_ui(self, parent_layout):
-
+        self.logger.debug("initializing character layout")
         # character list
         self.list_widget = QListWidget()
         self.list_widget.setMaximumHeight(75)

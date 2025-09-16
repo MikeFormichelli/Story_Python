@@ -19,22 +19,28 @@ from output_module import PDFGenerator
 
 
 class MainWindow(QWidget):
-    def __init__(self):
+    def __init__(self, logger):
         super().__init__()
         self.setWindowTitle("Character Record & Story App")
         self.setMinimumSize(1530, 815)
 
-        self.store = WritingStore()
+        # logger
+        self.logger = logger
 
-        self.pdf_generator = PDFGenerator()
+        # store for writer
+        self.store = WritingStore(logger=self.logger)
+
+        self.pdf_generator = PDFGenerator(logger=self.logger)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        character_pane = CharacterApp(pdf_generator=self.pdf_generator)
+        character_pane = CharacterApp(
+            pdf_generator=self.pdf_generator, logger=self.logger
+        )
         splitter.addWidget(character_pane)
 
         self.writing_pane = WritingLayout(
-            store=self.store, pdf_generator=self.pdf_generator
+            store=self.store, pdf_generator=self.pdf_generator, logger=self.logger
         )
         splitter.addWidget(self.writing_pane)
 
@@ -42,6 +48,7 @@ class MainWindow(QWidget):
             store=self.store,
             on_doc_selected=self.load_document,
             on_new_doc=self.create_new_document,
+            logger=self.logger,
         )
         splitter.addWidget(file_pane)
 
@@ -54,6 +61,8 @@ class MainWindow(QWidget):
 
         # ---- center on screen ----
         self.center_on_screen()
+
+        self.logger.info("Main Window booted & mounted")
 
     # methods
     def center_on_screen(self):

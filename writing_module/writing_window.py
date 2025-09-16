@@ -31,12 +31,13 @@ from .indented_textEditor import IndentedTextEdit
 class WritingModule(QWidget):
     document_saved = Signal()
 
-    def __init__(self, store, pdf_generator):
+    def __init__(self, store, pdf_generator, logger):
         super().__init__()
 
         self.setWindowTitle("Writer")
         self.setMinimumSize(600, 750)
 
+        self.logger = logger
         self.store = store
         self.doc_id = str(uuid.uuid4())
 
@@ -197,6 +198,8 @@ class WritingModule(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(container)
 
+        self.logger.debug("Writing module initialized and mounted.")
+
     # document handling methods
 
     def create_new_doc(self):
@@ -342,6 +345,9 @@ class WritingModule(QWidget):
 
     # produce PDF
     def print_to_pdf(self):
+        # save to update the preview
+        self.save_text()
+
         extra_styles = """
             h1 {
                 text-align:center; 

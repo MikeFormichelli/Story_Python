@@ -18,7 +18,7 @@ class FileModule(QWidget):
 
     delete_signal = Signal()
 
-    def __init__(self, store, on_doc_selected=None, on_new_doc=None):
+    def __init__(self, store, logger, on_doc_selected=None, on_new_doc=None):
         """
         :param on_doc_selected: callback(doc_id) when user clicks a document
         :param on_new_doc: callback() when user clicks New Document
@@ -26,7 +26,7 @@ class FileModule(QWidget):
         super().__init__()
 
         self.setMinimumWidth(150)
-
+        self.logger = logger
         self.store = store
         self.on_doc_selected = on_doc_selected
         self.on_new_doc = on_new_doc
@@ -49,6 +49,7 @@ class FileModule(QWidget):
 
         self.refresh_list()
 
+        self.logger.debug("FileModule initialized and mounted.")
         # methods
 
     def refresh_list(self):
