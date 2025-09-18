@@ -216,12 +216,14 @@ class CharacterApp(QWidget):
     # methods
 
     def load_all_characters(self):
+        self.logger.info("Bi-directional Sync initiated.")
         Character.sync_bi_directional(store=self.store)
         self.list_widget.clear()
         character_list = list(self.store.find())
         self.sorted_characters = sorted(character_list, key=lambda x: x["name"])
         for char in self.sorted_characters:
             self.list_widget.addItem(f"{char.get('name')} ({char.get('handle')})")
+        self.logger.info("Sync completed.")
 
     def get_selected_character_data(self):
         index = self.list_widget.currentRow()
@@ -233,9 +235,15 @@ class CharacterApp(QWidget):
 
     def load_selected_character(self):
         data = self.get_selected_character_data()
+        self.logger.debug("Getting data for character")
+
         if not data:
+            self.logger.debug("Failed to get data.")
             return
+
         self.current_char = Character(self.store, data=data)
+        self.logger.debug(f"Got character")
+
         for field in self.inputs:
             val = getattr(self.current_char, field)
             display_text = ", ".join(val) if isinstance(val, list) else str(val)

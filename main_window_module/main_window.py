@@ -77,7 +77,7 @@ class MainWindow(QWidget):
 
     def load_document(self, doc_id):
         """Called when FileModule selects a document"""
-        store = WritingStore()
+        store = WritingStore(logger=self.logger)
         html = store.get_document(doc_id)
         meta = store.index.get(doc_id, {})
         self.writing_pane.writing_tab.doc_id = doc_id
