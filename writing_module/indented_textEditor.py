@@ -44,7 +44,6 @@ class IndentedTextEdit(QTextEdit):
 
             # If line has no leading whitespace, use default indent
             indent = leading_whitespace or "    "
-
             # Let QTextEdit handle the newline first
             super().keyPressEvent(event)
 
@@ -65,6 +64,7 @@ class IndentedTextEdit(QTextEdit):
                     )  # <-- key bit!
 
                     # Insert the indent
+                    self.insertPlainText("\n")
                     self.insertPlainText(indent)
 
         else:
