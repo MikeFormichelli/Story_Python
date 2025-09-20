@@ -235,6 +235,27 @@ class WritingModule(QWidget):
         font_size = float(self.font_size_combo.currentText())
         self.store.save_document(self.doc_id, html_content, title, font, font_size)
         self.document_saved.emit()  # notify that save occurred
+        self.reload_current_document()
+
+    def reload_current_document(self):
+        """reload current document from the store after saving"""
+        if not self.doc_id:
+            return
+
+        # save cursor position
+        cursor = self.textEditSpace.textCursor()
+        pos = cursor.position()
+
+        # call back to main window to reload
+        mw = self.window()
+        if hasattr(mw, "load_document"):
+            mw.load_document(self.doc_id)
+
+        # restore cursor
+        cursor = self.textEditSpace.textCursor()
+        cursor.setPosition(pos)
+        self.textEditSpace.setTextCursor(cursor)
+        self.textEditSpace.ensureCursorVisible()
 
     def find_text(self):
         if not self.doc_id:

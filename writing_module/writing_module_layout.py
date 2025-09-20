@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QWidget, QTabWidget, QVBoxLayout
 from .writing_window import WritingModule
-from .row_editor import RowBasedHtmlEditor
-from .html_viewport import HtmlViewer
+
+# from .row_editor import RowBasedHtmlEditor
+# from .html_viewport import HtmlViewer
 
 
 class WritingLayout(QWidget):
@@ -30,7 +31,7 @@ class WritingLayout(QWidget):
         # self.tabs.addTab(self.editor_tab, "Editor")
 
         # html tab
-        self.html_tab = HtmlViewer()
-        self.tabs.addTab(self.html_tab, "HTML View")
+        # self.html_tab = HtmlViewer()
+        # self.tabs.addTab(self.html_tab, "HTML View")
 
         self.logger.debug("Writing layout initialized.")

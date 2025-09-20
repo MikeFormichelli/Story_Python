@@ -22,9 +22,9 @@ class HtmlViewer(QWebEngineView):
         else:
             self.setHtml(html)
 
-    def on_load_finished(self, ok):
-        if ok:
-            # Execute JavaScript to change the content of the editable div
-            self.page().runJavaScript(
-                "document.getElementById('editableDiv').innerText = 'Content changed from PySide6!';"
-            )
+    # def on_load_finished(self, ok):
+    #     if ok:
+    #         # Execute JavaScript to change the content of the editable div
+    #         self.page().runJavaScript(
+    #             "document.getElementById('editableDiv').innerText = 'Content changed from PySide6!';"
+    #         )

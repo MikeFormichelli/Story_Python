@@ -84,9 +84,9 @@ class MainWindow(QWidget):
 
     def load_document(self, doc_id):
         """Called when FileModule selects a document"""
-        store = WritingStore(logger=self.logger)
-        html = store.get_document(doc_id)
-        meta = store.index.get(doc_id, {})
+        # store = WritingStore(logger=self.logger)
+        html = self.store.get_document(doc_id)
+        meta = self.store.index.get(doc_id, {})
         self.writing_pane.writing_tab.doc_id = doc_id
         self.writing_pane.writing_tab.textEditSpace.setHtml(html or "")
         self.writing_pane.writing_tab.title_input.setText(meta.get("title", ""))
@@ -107,7 +107,10 @@ class MainWindow(QWidget):
             for doc_id in ordered_ids:
                 html = self.store.get_document(doc_id)
                 merged_html += (
-                    "<div>" + html + "</div>" + '<hr style="margin: 20px 0";>'
+                    '<div id="editableDiv" contenteditable="true">'
+                    + html
+                    + "</div>"
+                    + '<hr style="margin: 20px 0";>'
                 )  # simple divider
 
             # ✅ handle merging external PDFs
