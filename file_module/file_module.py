@@ -25,7 +25,7 @@ class FileModule(QWidget):
         """
         super().__init__()
 
-        self.setMinimumWidth(150)
+        self.setMinimumWidth(200)
         self.logger = logger
         self.store = store
         self.on_doc_selected = on_doc_selected

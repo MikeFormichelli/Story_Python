@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QStatusBar,
 )
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QKeySequence
 
 import fitz
@@ -30,7 +30,8 @@ class MainWindow(QMainWindow):
     def __init__(self, logger):
         super().__init__()
         self.setWindowTitle("Character Record & Story App")
-        self.setMinimumSize(1530, 815)
+        # self.setMinimumSize(1530, 815)
+        self.setMinimumWidth(1600)
 
         # logger
         self.logger = logger
@@ -41,7 +42,7 @@ class MainWindow(QMainWindow):
         self.pdf_generator = PDFGenerator(logger=self.logger)
 
         database_selector = QAction("Change Database", self)
-        database_selector.triggered.connect(self.toolbar_button_clicked)
+        database_selector.triggered.connect(self.set_database)
         database_selector.setCheckable(True)
         database_selector.setShortcut(QKeySequence("Ctrl+d"))
 
@@ -73,6 +74,10 @@ class MainWindow(QMainWindow):
         )
         splitter.addWidget(self.file_pane)
 
+        # splitter.setStretchFactor(0, 1)
+        # splitter.setStretchFactor(1, 2)
+        # splitter.setStretchFactor(2, 1)
+
         # ✅ Connect the signal from WritingModule to refresh file list
         self.writing_pane.writing_tab.document_saved.connect(
             self.file_pane.refresh_list
@@ -91,8 +96,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(splitter)
         self.setCentralWidget(central_widget)
 
-        # ---- center on screen ----
-        self.center_on_screen()
+        # ---- center on screen & resize to content ----
+        QTimer.singleShot(0, self._finalize_layout)
 
         self.logger.info("Main Window booted & mounted")
 
@@ -177,5 +182,9 @@ class MainWindow(QMainWindow):
             self.logger.error("PyMuPDF not installed. PDF to HTML skipped.")
             return "<p>[PDF could not be converted to HTML]</p>"
 
-    def toolbar_button_clicked(self, s):
-        print("click", s)
+    def set_database(self):
+        pass
+
+    def _finalize_layout(self):
+        self.adjustSize()
+        self.center_on_screen()

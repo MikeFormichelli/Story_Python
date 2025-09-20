@@ -24,6 +24,7 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Signal, Qt
 
 from .indented_textEditor import IndentedTextEdit
+from .search_bar import SearchBar
 
 # alternate layout manager
 
@@ -35,7 +36,8 @@ class WritingModule(QWidget):
         super().__init__()
 
         self.setWindowTitle("Writer")
-        self.setMinimumSize(600, 750)
+        # self.setMinimumSize(600, 750)
+        self.setMinimumWidth(700)
 
         self.logger = logger
         self.store = store
@@ -47,21 +49,8 @@ class WritingModule(QWidget):
         container_layout = QVBoxLayout(container)
 
         # search bar
-        searchbar_layout = QHBoxLayout()
-
-        self.search_bar = QLineEdit()
-        self.search_bar.returnPressed.connect(self.find_text)
-        self.search_bar.focusInEvent = self.clear_on_focus
-        searchbar_layout.addWidget(QLabel("Search:"))
-        search_button = QPushButton("Next")
-        search_button.clicked.connect(self.find_text)
-        searchbar_layout.addWidget(self.search_bar)
-        searchbar_layout.addWidget(search_button)
-
-        container_layout.addLayout(searchbar_layout)
-
-        # track last search
-        self._last_search = ""
+        search_bar = SearchBar(doc_id=self.doc_id)
+        container_layout.addLayout(search_bar)
 
         # formatting buttons
         toolbar_layout = QHBoxLayout()
@@ -186,6 +175,7 @@ class WritingModule(QWidget):
         self.textEditSpace.setText("Write here...")
         self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Default
         text_editor_container.addWidget(self.textEditSpace)
+        search_bar.textEditor = self.textEditSpace
 
         container_layout.addLayout(text_editor_container)
 
@@ -256,56 +246,6 @@ class WritingModule(QWidget):
         cursor.setPosition(pos)
         self.textEditSpace.setTextCursor(cursor)
         self.textEditSpace.ensureCursorVisible()
-
-    def find_text(self):
-        if not self.doc_id:
-            return
-
-        search_term = self.search_bar.text()
-        if not search_term:
-            return
-
-        document = self.textEditSpace.document()
-
-        # determine where to start search
-        if not hasattr(self, "_last_search") or self._last_search != search_term:
-            start_pos = 0
-            self._last_search = search_term
-        else:
-            tc = self.textEditSpace.textCursor()
-            try:
-                start_pos = tc.selectionEnd()
-            except AttributeError:
-                start_pos = max(tc.position(), tc.anchor())
-
-        # create a cursor positioned at start_pos and search from there
-        start_cursor = QTextCursor(document)
-        start_cursor.setPosition(start_pos)
-        found_cursor = document.find(search_term, start_cursor)
-
-        if not found_cursor.isNull():
-            self.textEditSpace.setTextCursor(found_cursor)
-            self.textEditSpace.ensureCursorVisible()
-            self.textEditSpace.setFocus()
-            return
-
-        if start_pos != 0:
-            # wrap around and start at top search again
-            start_cursor.setPosition(0)
-            found_cursor = document.find(search_term, start_cursor)
-
-            if not found_cursor.isNull():
-                self.textEditSpace.setTextCursor(found_cursor)
-                self.textEditSpace.ensureCursorVisible()
-                self.textEditSpace.setFocus()
-                return
-
-        self.search_bar.clear()
-        self.search_bar.setText("Term not found.")
-
-    def clear_on_focus(self, event):
-        self.search_bar.clear()
-        QLineEdit.focusInEvent(self.search_bar, event)
 
     def load_font_and_size(self, font, font_size):
         if font:

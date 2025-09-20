@@ -38,7 +38,8 @@ class CharacterApp(QWidget):
     def __init__(self, pdf_generator, logger, html_saver):
         super().__init__()
         self.setWindowTitle("Character Manager")
-        self.setMinimumSize(400, 800)  # avoid fixed height
+        # self.setMinimumSize(400, 800)  # avoid fixed height
+        self.setMinimumWidth(450)
 
         self.logger = logger
         self.html_saver = html_saver
