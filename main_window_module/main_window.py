@@ -1,8 +1,19 @@
-import os
 import uuid
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QSplitter, QApplication, QDialog
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QSplitter,
+    QApplication,
+    QDialog,
+    QToolBar,
+    QMainWindow,
+    QCheckBox,
+    QLabel,
+    QStatusBar,
+)
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QKeySequence
 
 import fitz
 
@@ -15,7 +26,7 @@ from file_module import FileModule, MergeDialog
 from output_module import PDFGenerator
 
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self, logger):
         super().__init__()
         self.setWindowTitle("Character Record & Story App")
@@ -29,6 +40,17 @@ class MainWindow(QWidget):
 
         self.pdf_generator = PDFGenerator(logger=self.logger)
 
+        database_selector = QAction("Change Database", self)
+        database_selector.triggered.connect(self.toolbar_button_clicked)
+        database_selector.setCheckable(True)
+        database_selector.setShortcut(QKeySequence("Ctrl+d"))
+
+        # file menu
+        menu = self.menuBar()
+        file_menu = menu.addMenu("&File")
+        file_menu.addAction(database_selector)
+
+        # splitter layout for sub modules
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         character_pane = CharacterApp(
@@ -63,8 +85,11 @@ class MainWindow(QWidget):
         # connect the file_pane signal for merge
         self.file_pane.merge_signal.connect(self.merge_documents)
 
-        layout = QVBoxLayout(self)
+        # ---wrap splitter in central QWidget since QMainWindow needs setCentralWidget
+        central_widget = QWidget()
+        layout = QVBoxLayout(central_widget)
         layout.addWidget(splitter)
+        self.setCentralWidget(central_widget)
 
         # ---- center on screen ----
         self.center_on_screen()
@@ -151,3 +176,6 @@ class MainWindow(QWidget):
         except ImportError:
             self.logger.error("PyMuPDF not installed. PDF to HTML skipped.")
             return "<p>[PDF could not be converted to HTML]</p>"
+
+    def toolbar_button_clicked(self, s):
+        print("click", s)
