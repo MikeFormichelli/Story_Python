@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QDialog,
 )
 from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 
 # from character_store import CharacterStore
 from .visual_character_module import Character
@@ -32,12 +32,16 @@ from .ClickableLabel import ClickableLabel
 
 
 class CharacterApp(QWidget):
-    def __init__(self, pdf_generator, logger):
+
+    save_html_signal = Signal()
+
+    def __init__(self, pdf_generator, logger, html_saver):
         super().__init__()
         self.setWindowTitle("Character Manager")
         self.setMinimumSize(400, 800)  # avoid fixed height
 
         self.logger = logger
+        self.html_saver = html_saver
 
         # database stores
         stores = get_data_stores()
@@ -201,12 +205,16 @@ class CharacterApp(QWidget):
         self.print_btn = QPushButton("PDF")
         self.print_btn.clicked.connect(self.print_to_pdf)
 
+        self.convert_btn = QPushButton("HTML")
+        self.convert_btn.clicked.connect(self.convert_to_html)
+
         for b in (
             self.new_btn,
             self.edit_btn,
             self.save_btn,
             self.delete_btn,
             self.print_btn,
+            self.convert_btn,
         ):
             btn_layout.addWidget(b)
 
@@ -404,3 +412,15 @@ class CharacterApp(QWidget):
 
     def print_to_pdf(self):
         self.pdf_generator.generate_character_sheet(self.current_char.to_dict())
+
+    def convert_to_html(self):
+        char_html = self.pdf_generator.generate_html(self.current_char.to_dict())
+        title = (
+            self.current_char.handle
+            if self.current_char.handle != "" or None
+            else self.current_char.name
+        )
+        self.html_saver(
+            self.current_char._id, char_html, title, font="Exo 2", font_size=12
+        )
+        self.save_html_signal.emit()

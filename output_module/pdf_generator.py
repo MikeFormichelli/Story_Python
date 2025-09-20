@@ -60,35 +60,19 @@ class PDFGenerator:
         output_dir = self.base_dir.parent / "outputs"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Make sure image path is absolute
-        if "image_path" in data_dict:
-            data_dict["image_path"] = Path(data_dict["image_path"]).resolve().as_uri()
-
-        # break cyberware list into rows of 4
-        if "cyberware" in data_dict:
-            cyberware_list = data_dict["cyberware"]
-            rows = []
-            for i in range(0, len(cyberware_list), 4):
-                rows.append(cyberware_list[i : i + 4])
-            data_dict["cyberware"] = rows
-
-        rendered_output = self.template.render(data_dict)
-
-        # process html via soup_parser
-        fixed_html_dict = self.soup_parser(rendered_output)
-        fixted_html = fixed_html_dict["fixed_html"]
+        fixed_html = self.generate_html(data_dict)
 
         # pass html string
-        proceed = self.preview_html(fixted_html)
+        proceed = self.preview_html(fixed_html)
 
         if not proceed:
-            self.logger("user declined pdf")
+            self.logger.info("user declined pdf")
             return
 
         output_file = self.base_dir.parent / "outputs" / f"{data_dict['handle']}.pdf"
 
         # Tell WeasyPrint where to resolve relative paths from (very important!)
-        HTML(string=fixted_html, base_url=data_dict["image_path"]).write_pdf(
+        HTML(string=fixed_html, base_url=data_dict["image_path"]).write_pdf(
             target=str(output_file), stylesheets=[CSS(filename=str(self.css_file))]
         )
 
@@ -149,23 +133,31 @@ class PDFGenerator:
         # convert all <img> src paths to file:// URIs
         soup = BeautifulSoup(html_string, "html.parser")
         for img in soup.find_all("img"):
+
             if not img["src"].startswith("file://"):
                 img_path = Path(img["src"]).resolve()
                 img["src"] = img_path.as_uri()
 
-                # add class for styling
-                existing_classes = img.get("class", [])
-                if isinstance(existing_classes, str):  # just in case it's a string
-                    existing_classes = existing_classes.split()
-                if "pdf-img" not in existing_classes:
-                    existing_classes.append("pdf-img")
-                if "float" not in existing_classes:
-                    float_dir = img.get("style", "").split(":")[1].strip()
-                    if float_dir == "right;":
-                        existing_classes.append("float-right")
-                    elif float_dir == "left;":
-                        existing_classes.append("float-left")
-                img["class"] = existing_classes
+            # ensure a style exists:
+
+            if not img.has_attr("style"):
+                img["style"] = "float: left; margin: 5px;"
+                img["width"] = "179"
+                img["height"] = "230"
+
+            # add class for styling
+            existing_classes = img.get("class", [])
+            if isinstance(existing_classes, str):  # just in case it's a string
+                existing_classes = existing_classes.split()
+            if "pdf-img" not in existing_classes:
+                existing_classes.append("pdf-img")
+            if "float" not in existing_classes:
+                float_dir = img.get("style", "").split(":")[1].strip()
+                if float_dir == "right;":
+                    existing_classes.append("float-right")
+                elif float_dir == "left;":
+                    existing_classes.append("float-left")
+            img["class"] = existing_classes
 
         # prep head
         head = soup.head or soup.new_tag("head")
@@ -188,3 +180,24 @@ class PDFGenerator:
 
         # convert back to string:
         return {"fixed_html": str(soup), "head": head}
+
+    def generate_html(self, data_dict, extra_styles=None):
+
+        # Make sure image path is absolute
+        if "image_path" in data_dict:
+            data_dict["image_path"] = Path(data_dict["image_path"]).resolve().as_uri()
+
+        # break cyberware list into rows of 4
+        if "cyberware" in data_dict:
+            cyberware_list = data_dict["cyberware"]
+            rows = []
+            for i in range(0, len(cyberware_list), 4):
+                rows.append(cyberware_list[i : i + 4])
+            data_dict["cyberware"] = rows
+
+        rendered_output = self.template.render(data_dict)
+
+        # process html via soup_parser
+        fixed_html_dict = self.soup_parser(rendered_output, extra_styles=extra_styles)
+        fixed_html = fixed_html_dict["fixed_html"]
+        return fixed_html
