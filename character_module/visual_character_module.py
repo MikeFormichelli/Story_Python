@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import uuid
 import json
-from bson import ObjectId
+from bson.objectid import ObjectId
 
 
 class Character:
@@ -61,7 +61,6 @@ class Character:
     def sync_bi_directional(store, file="data/characters.json"):
         # load JSON
         try:
-
             with open(file, "r") as f:
                 json_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
@@ -85,10 +84,9 @@ class Character:
                 mongo_time = mongo_char.get("last_updated", "")
 
                 if json_time > mongo_time:
+                    print(f"This is the id for merging: {_id}")
                     # JSON is newer, update DB
-                    store.update_one(
-                        {"_id": ObjectId(_id)}, {"$set": json_char}, upsert=True
-                    )
+                    store.update_one({"_id": _id}, {"$set": json_char}, upsert=True)
                     merged_data[_id] = json_char
                 else:
                     # MongoDb is newer or same, update JSON

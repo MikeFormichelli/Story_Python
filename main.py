@@ -1,8 +1,16 @@
+import os
 import sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont
 from main_window_module import MainWindow
 from logging_module import logging_setup
+
+# set directories
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+if not os.path.exists("data"):
+    os.makedirs("data")
 
 # set logger
 logger = logging_setup()

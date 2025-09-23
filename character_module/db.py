@@ -1,12 +1,13 @@
 import os
-import json
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from pymongo.errors import ServerSelectionTimeoutError
+import sqlite3
 from .character_store import CharacterStore
 
 # Default path to local JSON data:
 DEFAULT_JSON_FILE = "data/characters.json"
+DEFAULT_SQLITE_FILE = "data/cyberpunk.db"
 
 # globals:
 client = None
@@ -27,59 +28,64 @@ def connect_to_db():
         client.admin.command("ping")  # quick connectivity check
         db = client[db_name]
         collection_names = db.list_collection_names()
-        # characters_collection = db["characters"]
-        # items_collection = db["newItems"]
-        # cyberware_items = db["cyberware_items"]
+
         return_dict = {}
         for cn in collection_names:
             return_dict[cn] = db[cn]
 
         print("✅ Connected to MongoDB.")
         return return_dict
-        # return {
-        #     "characters": characters_collection,
-        #     "items": items_collection,
-        #     "cyberware_items": cyberware_items,
-        # }
 
     except ServerSelectionTimeoutError:
         print("⚠️ MongoDB not available. Falling back to JSON.")
         return None
 
 
-# def load_characters_fallback():
-#     if os.path.exists(DEFAULT_JSON_FILE):
-#         with open(DEFAULT_JSON_FILE, "r") as f:
-#             return json.load(f)
-#     else:
-#         print("❌ No JSON file found.")
-#         return {}
-
-
-# Init once at import
-# collections = connect_to_db()
-
-
 def get_data_stores():
     collections = connect_to_db()
     col_dict = {
-        "character_store": CharacterStore(),
+        "character_store": None,
+        "items_store": None,
     }
 
     if collections:
-        # return {
-        #     "character_store": CharacterStore(),
-        #     "items_collection": collections["newItems"],
-        #     "cyberware_items": collections["cyberware_items"],
-        # }
-        for k in collections.keys():
-            col_dict[k] = collections[k]
+        # MongoDB available ✅
+        for k, v in collections.items():
+            col_dict[k] = v
 
-        return col_dict
+        # re-init CharacterStore with MongoDB collection
+        if "characters" in collections:
+            col_dict["character_store"] = CharacterStore(collections["characters"])
+
     else:
-        # fallback_data = load_characters_fallback()
-        return {
-            "character_store": CharacterStore(),
-            "items_collection": None,
-            "cyberware_items": None,
-        }
+        col_dict["character_store"] = CharacterStore(fallback_file=DEFAULT_JSON_FILE)
+
+    if not collections:
+        sqlite_conn = connect_to_sqlite()
+        cursor = sqlite_conn.cursor()
+        sqlite_tables = [t[0] for t in cursor.fetchall()]
+        items_store = {}
+        for tname in sqlite_tables:
+            data = list(cursor.execute(f"SELECT * FROM {tname}"))
+            col_names = [description[0] for description in cursor.description]
+            data_list = []
+            for item in data:
+                item_dict = {}
+                for i in range(len(col_names)):
+                    item_dict[col_names[i]] = item[i]
+                data_list.append(item_dict)
+            items_store[tname] = data_list
+
+    return col_dict
+
+
+def connect_to_sqlite():
+    try:
+        conn = sqlite3.connect(DEFAULT_SQLITE_FILE)
+
+        print("✅ Connected to SQLite (fallback db)")
+        return conn
+
+    except sqlite3.Error as e:
+        print(f"💥 SQLITE connection failed: {e}")
+        return None

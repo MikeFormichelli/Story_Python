@@ -3,7 +3,7 @@ import os
 
 
 class CharacterStore:
-    def __init__(self, db=None, fallback_file="data/characters.json"):
+    def __init__(self, db=None, fallback_file=None):
         self.db = db
         self.use_db = db is not None
         self.fallback_file = fallback_file
