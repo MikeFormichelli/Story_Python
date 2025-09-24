@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 from pymongo.errors import ServerSelectionTimeoutError
 import sqlite3
 from .character_store import CharacterStore
+from .SQLiteCollection import SQLiteCollectionWrapper
 
+print(os.path.realpath(__file__))
 # Default path to local JSON data:
 DEFAULT_JSON_FILE = "data/characters.json"
 DEFAULT_SQLITE_FILE = "data/cyberpunk.db"
@@ -63,18 +65,24 @@ def get_data_stores():
     if not collections:
         sqlite_conn = connect_to_sqlite()
         cursor = sqlite_conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         sqlite_tables = [t[0] for t in cursor.fetchall()]
-        items_store = {}
+
+        item_store = {}
         for tname in sqlite_tables:
-            data = list(cursor.execute(f"SELECT * FROM {tname}"))
-            col_names = [description[0] for description in cursor.description]
-            data_list = []
-            for item in data:
-                item_dict = {}
-                for i in range(len(col_names)):
-                    item_dict[col_names[i]] = item[i]
-                data_list.append(item_dict)
-            items_store[tname] = data_list
+
+            item_store[tname] = SQLiteCollectionWrapper(sqlite_conn, tname)
+            # data = list(cursor.execute(f"SELECT * FROM {tname}"))
+            # col_names = [description[0] for description in cursor.description]
+            # data_list = []
+            # for item in data:
+            #     item_dict = {}
+            #     for i in range(len(col_names)):
+            #         item_dict[col_names[i]] = item[i]
+            #     data_list.append(item_dict)
+            # items_store[tname] = data_list
+
+        col_dict["items_store"] = item_store
 
     return col_dict
 
@@ -84,6 +92,7 @@ def connect_to_sqlite():
         conn = sqlite3.connect(DEFAULT_SQLITE_FILE)
 
         print("✅ Connected to SQLite (fallback db)")
+
         return conn
 
     except sqlite3.Error as e:

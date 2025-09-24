@@ -48,8 +48,8 @@ class CharacterApp(QWidget):
         stores = get_data_stores()
         self.logger.debug("stores loaded.")
         self.store = stores.get("character_store")
-        self.items_collection = stores.get("newItems", None)
-        self.cyberware_items = stores.get("cyberware_items", None)
+        self.items_store = stores.get("items_store", None)
+
         self.current_char = None
         self.editing = False
 
@@ -83,13 +83,14 @@ class CharacterApp(QWidget):
 
         character_layout.addWidget(scroll)
         self.tabs.addTab(character_tab, "Characters")
+        
+        for cname, collection in self.items_store.items():
 
-        for cname, collection in stores.items():
             if cname == "character_store":
                 continue
             if cname == "characters":
                 continue
-
+            
             if not hasattr(collection, "find_one"):
                 continue  # probably JSON fallback or unavailable
 
