@@ -2,7 +2,6 @@ import os
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QPushButton,
     QFormLayout,
     QLineEdit,
     QTextEdit,
@@ -30,6 +29,8 @@ from .items_tab import ItemsTab
 # clickable label:
 from .ClickableLabel import ClickableLabel
 
+#custom button
+from ui import PointerButton
 
 class CharacterApp(QWidget):
 
@@ -135,7 +136,7 @@ class CharacterApp(QWidget):
         image_path_layout = QHBoxLayout()
         self.image_path_input = QLineEdit()
         self.image_path_input.setReadOnly(True)
-        self.browse_btn = QPushButton("Browse")
+        self.browse_btn = PointerButton("Browse")
         self.browse_btn.clicked.connect(self.browse_image)
         self.browse_btn.setEnabled(False)
         image_path_layout.addWidget(QLabel("Path: "))
@@ -192,22 +193,22 @@ class CharacterApp(QWidget):
         # buttons at bottom
         btn_layout = QHBoxLayout()
 
-        self.new_btn = QPushButton("New")
+        self.new_btn = PointerButton("New")
         self.new_btn.clicked.connect(self.new_character)
 
-        self.edit_btn = QPushButton("Edit")
+        self.edit_btn = PointerButton("Edit")
         self.edit_btn.clicked.connect(self.edit_character)
 
-        self.save_btn = QPushButton("Save")
+        self.save_btn = PointerButton("Save")
         self.save_btn.clicked.connect(self.save_character)
 
-        self.delete_btn = QPushButton("Delete")
+        self.delete_btn = PointerButton("Delete")
         self.delete_btn.clicked.connect(self.delete_character)
 
-        self.print_btn = QPushButton("PDF")
+        self.print_btn = PointerButton("PDF")
         self.print_btn.clicked.connect(self.print_to_pdf)
 
-        self.convert_btn = QPushButton("HTML")
+        self.convert_btn = PointerButton("HTML")
         self.convert_btn.clicked.connect(self.convert_to_html)
 
         for b in (
@@ -218,6 +219,7 @@ class CharacterApp(QWidget):
             self.print_btn,
             self.convert_btn,
         ):
+            # b.setCursor(QCursor(Qt.PointingHandCursor))
             btn_layout.addWidget(b)
 
         # layout.addLayout(btn_layout)

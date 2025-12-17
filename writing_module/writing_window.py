@@ -4,7 +4,6 @@ from pathlib import Path
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QPushButton,
     QHBoxLayout,
     QComboBox,
     QColorDialog,
@@ -25,6 +24,8 @@ from PySide6.QtCore import Signal, Qt
 
 from .indented_textEditor import IndentedTextEdit
 from .search_bar import SearchBar
+
+from ui import PointerButton
 
 # alternate layout manager
 
@@ -71,38 +72,38 @@ class WritingModule(QWidget):
         toolbar_layout.addWidget(self.font_size_combo)
 
         # text color button
-        self.color_btn = QPushButton("Color")
+        self.color_btn = PointerButton("Color")
         self.color_btn.clicked.connect(self.set_text_color)
         self.color_btn.setFixedWidth(65)
         toolbar_layout.addWidget(self.color_btn)
 
         # Alignment buttons
 
-        left_btn = QPushButton("Left")
+        left_btn = PointerButton("Left")
         left_btn.clicked.connect(
             lambda: self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignLeft)
         )
         toolbar_layout.addWidget(left_btn)
 
-        center_btn = QPushButton("Center")
+        center_btn = PointerButton("Center")
         center_btn.clicked.connect(
             lambda: self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         )
         toolbar_layout.addWidget(center_btn)
 
-        justify_btn = QPushButton("Justify")
+        justify_btn = PointerButton("Justify")
         justify_btn.clicked.connect(
             lambda: self.textEditSpace.setAlignment(Qt.AlignmentFlag.AlignJustify)
         )
         toolbar_layout.addWidget(justify_btn)
 
         # images
-        img_btn = QPushButton("⬅️📷")  # emoji icon
+        img_btn = PointerButton("⬅️📷")  # emoji icon
         img_btn.setToolTip("Insert Image Left Side")
         img_btn.clicked.connect(lambda: self.open_image_dialog("left"))
         toolbar_layout.addWidget(img_btn)
 
-        r_img_btn = QPushButton("📷➡️")  # emoji icon
+        r_img_btn = PointerButton("📷➡️")  # emoji icon
         r_img_btn.setToolTip("Insert Image Right Side")
         r_img_btn.clicked.connect(lambda: self.open_image_dialog("right"))
         toolbar_layout.addWidget(r_img_btn)
@@ -123,44 +124,44 @@ class WritingModule(QWidget):
         font_mod_container = QVBoxLayout()
 
         # headings buttons
-        h1_btn = QPushButton("H1")
+        h1_btn = PointerButton("H1")
         h1_btn.clicked.connect(lambda: self.set_heading_level(1))
-        h2_btn = QPushButton("H2")
+        h2_btn = PointerButton("H2")
         h2_btn.clicked.connect(lambda: self.set_heading_level(2))
-        h3_btn = QPushButton("H3")
+        h3_btn = PointerButton("H3")
         h3_btn.clicked.connect(lambda: self.set_heading_level(3))
-        h4_btn = QPushButton("H4")
+        h4_btn = PointerButton("H4")
         h4_btn.clicked.connect(lambda: self.set_heading_level(4))
-        h5_btn = QPushButton("H5")
+        h5_btn = PointerButton("H5")
         h5_btn.clicked.connect(lambda: self.set_heading_level(5))
-        h6_btn = QPushButton("H6")
+        h6_btn = PointerButton("H6")
         h6_btn.clicked.connect(lambda: self.set_heading_level(6))
         for b in [h1_btn, h2_btn, h3_btn, h4_btn, h5_btn, h6_btn]:
             b.setFixedWidth(65)
             font_mod_container.addWidget(b)
 
         # bullet list button
-        bullet_btn = QPushButton("•B")
+        bullet_btn = PointerButton("•B")
         bullet_btn.clicked.connect(self.insert_bullet_list)
         bullet_btn.setFixedWidth(65)
         font_mod_container.addWidget(bullet_btn)
 
         # bold
-        bold_btn = QPushButton("B")
+        bold_btn = PointerButton("B")
         bold_btn.setCheckable(True)
         bold_btn.clicked.connect(self.toggle_bold)
         bold_btn.setFixedWidth(65)
         font_mod_container.addWidget(bold_btn)
 
         # italic
-        italic_btn = QPushButton("I")
+        italic_btn = PointerButton("I")
         italic_btn.setCheckable(True)
         italic_btn.clicked.connect(self.toggle_italic)
         italic_btn.setFixedWidth(65)
         font_mod_container.addWidget(italic_btn)
 
         # underline
-        underline_btn = QPushButton("U")
+        underline_btn = PointerButton("U")
         underline_btn.setCheckable(True)
         underline_btn.clicked.connect(self.toggle_underline)
         underline_btn.setFixedWidth(65)
@@ -183,19 +184,19 @@ class WritingModule(QWidget):
         self.button_layout = QHBoxLayout()
 
         # save button
-        self.save_btn = QPushButton("Save")
+        self.save_btn = PointerButton("Save")
         self.save_btn.clicked.connect(self.save_text)
         self.button_layout.addWidget(self.save_btn)
         # new document button
-        self.new_doc_btn = QPushButton("New Doc")
+        self.new_doc_btn = PointerButton("New Doc")
         self.new_doc_btn.clicked.connect(self.create_new_doc)
         self.button_layout.addWidget(self.new_doc_btn)
         # clear text button
-        self.clear_text_btn = QPushButton("Clear")
+        self.clear_text_btn = PointerButton("Clear")
         self.clear_text_btn.clicked.connect(lambda: self.textEditSpace.clear())
         self.button_layout.addWidget(self.clear_text_btn)
         # print button
-        self.print_to_pdf_btn = QPushButton("PDF")
+        self.print_to_pdf_btn = PointerButton("PDF")
         self.print_to_pdf_btn.clicked.connect(self.print_to_pdf)
         self.button_layout.addWidget(self.print_to_pdf_btn)
 

@@ -47,21 +47,23 @@ def get_data_stores():
     collections = connect_to_db()
     col_dict = {
         "character_store": None,
-        "items_store": None,
+        "items_store": {},
     }
-
+    
     if collections:
+        print("The collections", collections)
         # MongoDB available ✅
         for k, v in collections.items():
-            col_dict[k] = v
+            if k != "character_store":
+                
+                col_dict["items_store"][k] = v
 
         # re-init CharacterStore with MongoDB collection
         if "characters" in collections:
             col_dict["character_store"] = CharacterStore(collections["characters"])
-
     else:
         col_dict["character_store"] = CharacterStore(fallback_file=DEFAULT_JSON_FILE)
-
+        
     if not collections:
         sqlite_conn = connect_to_sqlite()
         cursor = sqlite_conn.cursor()
